@@ -235,7 +235,7 @@ export function pickAxisMax(values) {
  * @returns the last path segment, or `Unknown project`.
  */
 export function projectOf(header) {
-  const raw = header?.cwd ?? header?.workspace ?? header?.project
+  const raw = header?.workspace ?? header?.cwd ?? header?.project
   if (typeof raw !== 'string' || raw.length === 0) return 'Unknown project'
   const parts = raw.split(/[\\/]/).filter((part) => part.length > 0)
   return parts.length === 0 ? raw : parts[parts.length - 1]
@@ -255,7 +255,7 @@ export function sessionBreakdown(records, metaById, costOf = () => 0) {
     const id = typeof record.sessionId === 'string' ? record.sessionId : 'unknown'
     const meta = metaById instanceof Map ? metaById.get(id) : undefined
     const header = meta?.header
-    const project = typeof meta?.project === 'string' && meta.project.length > 0 ? meta.project : projectOf(header)
+    const project = projectOf(header)
     const title = typeof meta?.title === 'string' && meta.title.length > 0
       ? meta.title
       : header?.origin === 'subagent'

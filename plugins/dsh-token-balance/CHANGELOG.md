@@ -1,5 +1,13 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.5] - 2026-11-08
+
+### Changed
+- The time-range selector now shares one row with the Y-axis selector above the
+  chart, instead of sitting alone at the top of the panel.
+- The consumption breakdown groups by **workspace** again (the workspace name from
+  the session header), not by an inferred subfolder.
+
 ## [1.3.4] - 2026-11-08
 
 ### Added
