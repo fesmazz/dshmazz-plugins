@@ -1,5 +1,13 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.1] - 2026-11-08
+
+### Changed
+- Bucket size follows the selected range: 6h and 12h in 30-minute buckets, 24h
+  hourly, 48h two-hourly; the panel chart title matches the bucket size.
+- The dock bar shows the balance and this session's cost for the selected range;
+  token totals are no longer shown there.
+
 ## [1.3.0] - 2026-11-08
 
 ### Added

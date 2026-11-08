@@ -40,6 +40,7 @@ const API_KEY_REF = 'DEEPSEEK_API_KEY'
 const REPORT_CACHE_MS = 30_000
 const REPORT_CACHE_LIMIT = 16
 const HOUR_MS = 3_600_000
+const HALF_HOUR_MS = 1_800_000
 const RANGE_HOURS = [6, 12, 24, 48]
 const DEFAULT_RANGE_HOURS = 24
 const SESSION_CACHE_LIMIT = 600
@@ -247,7 +248,7 @@ export function apply(ctx, config = {}) {
   }
 
   async function buildReport(now, hours, sessionId) {
-    const bucketMs = hours === 48 ? 2 * HOUR_MS : HOUR_MS
+    const bucketMs = hours === 6 || hours === 12 ? HALF_HOUR_MS : hours === 48 ? 2 * HOUR_MS : HOUR_MS
     const end = Math.floor(now / bucketMs) * bucketMs + bucketMs
     const windowStart = end - hours * HOUR_MS
     const query = service(ctx, 'sessionQuery')

@@ -37,6 +37,8 @@ window.__ModuleLoader__.load({
       'panel.balance': 'Balance',
       'panel.costByHour': 'Cost by hour',
       'panel.tokensByHour': 'Tokens by hour',
+      'panel.costPer30m': 'Cost per 30 minutes',
+      'panel.tokensPer30m': 'Tokens per 30 minutes',
       'panel.costPer2h': 'Cost per 2 hours',
       'panel.tokensPer2h': 'Tokens per 2 hours',
       'panel.hint': 'Hover a bar for details',
@@ -88,6 +90,8 @@ window.__ModuleLoader__.load({
       'panel.balance': '余额',
       'panel.costByHour': '每小时费用',
       'panel.tokensByHour': '每小时 Token',
+      'panel.costPer30m': '每 30 分钟费用',
+      'panel.tokensPer30m': '每 30 分钟 Token',
       'panel.costPer2h': '每 2 小时费用',
       'panel.tokensPer2h': '每 2 小时 Token',
       'panel.hint': '悬停柱状图查看明细',
@@ -551,14 +555,11 @@ window.__ModuleLoader__.load({
       const balance = balanceTextOf(data.balance, t)
       if (balance !== undefined && balance !== '') parts.push(t('dock.balance') + ' ' + balance)
       const win = data.window
-      if (win != null && win.totals.requests > 0) {
+      if (win != null && data.session != null) {
         const rangeHours = Number.isFinite(win.hours) ? win.hours : 24
-        parts.push(t('dock.window', { hours: rangeHours }) + ' ' + formatCost(win.totals.cost, data.rates.currency))
-        parts.push(formatTokens(win.totals.totalTokens) + ' ' + t('dock.tokens'))
-      } else if (win == null) {
-        parts.push(t('dock.unavailable'))
+        parts.push(t('dock.window', { hours: rangeHours }) + ' ' + formatCost(data.session.cost, data.rates.currency))
       } else {
-        parts.push(t('dock.noUsage'))
+        parts.push(t('dock.unavailable'))
       }
       return parts.join(' · ')
     }
@@ -911,15 +912,19 @@ window.__ModuleLoader__.load({
                 [t('stat.completion'), formatTokens(totals.outputTokens)],
               ]
       const balanceText = data === null ? undefined : balanceTextOf(data.balance, t)
-      const perTwoHours = win !== undefined && win.bucketMs > 3_600_000
+      const bucketMs = win === undefined ? 3_600_000 : win.bucketMs
       const chartTitle =
         tab === 'cost'
-          ? perTwoHours
-            ? t('panel.costPer2h')
-            : t('panel.costByHour')
-          : perTwoHours
-            ? t('panel.tokensPer2h')
-            : t('panel.tokensByHour')
+          ? bucketMs < 3_600_000
+            ? t('panel.costPer30m')
+            : bucketMs > 3_600_000
+              ? t('panel.costPer2h')
+              : t('panel.costByHour')
+          : bucketMs < 3_600_000
+            ? t('panel.tokensPer30m')
+            : bucketMs > 3_600_000
+              ? t('panel.tokensPer2h')
+              : t('panel.tokensByHour')
 
       const content = []
       content.push(

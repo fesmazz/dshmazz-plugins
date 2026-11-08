@@ -12,22 +12,26 @@ More: [6-hour card](concepts/v11-dock-6h.png) · [48-hour card](concepts/v11-doc
 
 ## What you see
 
-- **Dock line** under the composer: `Balance $10.35 · 24h $20.64 · 1.96B tokens`.
-  It is a button; the window is the selected 6/12/24/48 hours. The dock summary and
-  the panel follow the range chosen in the hover card.
+- **Dock line** under the composer: `Balance $10.35 · 24h $0.64`.
+  It shows the balance and **this session's** cost for the selected 6/12/24/48-hour
+  window; token totals are not shown in the bar. The dock summary and the panel
+  follow the range chosen in the hover card.
 - **Hover summary**: this session vs all sessions for the selected window, for cost,
   tokens and API requests, plus this session's share of the window's cost. The range
   selector (6h/12h/24h/48h) lives in the card header and is shared with the panel and
   the dock summary.
 - **Usage panel**: click the dock line to open the **Usage** tab in the right Sidebar.
-  - **Cost**: estimated spend, API requests and tokens; hourly bars stacked by model.
-  - **Tokens**: total, prompt and completion tokens; hourly bars stacked by model.
+  - **Cost**: estimated spend, API requests and tokens; bars stacked by model.
+  - **Tokens**: total, prompt and completion tokens; bars stacked by model.
   - Hover a bar for the bucket's time range, request count, per-model values and total.
-  - The range selector is also in the panel header. 6/12/24h use hourly buckets; 48h
-    uses two-hour buckets and relative -48h/Now axis labels.
+  - The range selector is also in the panel header. Bucket size follows the range:
+    6/12h = 30 minutes, 24h = 1 hour, 48h = 2 hours; the chart title reflects it.
+    48h also uses relative -48h/Now axis labels.
   - The panel is responsive: the chart reflows to the sidebar and pane width.
 
 ![Usage panel — Cost](concepts/v11-panel-cost.png)
+
+![Usage panel — 6-hour window](concepts/v11-panel-6h.png)
 
 ![Usage panel — 48-hour window](concepts/v11-panel-48h.png)
 
