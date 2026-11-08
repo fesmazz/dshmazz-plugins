@@ -1,35 +1,54 @@
 /**
- * Delegation Models: model-aware subagent delegation.
+ * Host half of the Delegation Models plugin.
  *
- * Registers two model-facing tools:
- * - `delegate_model` starts a continuable subagent on a routed model, resolved
- *   from a named profile or explicit provider/model, and returns its id.
- * - `set_delegation_profile` records the profile this session was instructed to
- *   use for later delegations.
+ * V1.1 adds one persistent state document (profiles, rates, auto-configure
+ * source) and same-origin routes the Web UI reads and writes:
  *
- * A system-prompt section tells every agent the current profiles, the session
- * override and how delegation model instructions are honored. Teammates started
- * with `spawn_teammate` inherit the Lead model (the Team tool takes no model
- * argument), so model-specific work is delegated through `delegate_model`
- * instead.
+ *   GET  /dsh-delegation-models/state
+ *   POST /dsh-delegation-models/profiles
+ *   POST /dsh-delegation-models/rates
+ *   POST /dsh-delegation-models/source
+ *   POST /dsh-delegation-models/overrides
+ *
+ * Two model-facing tools use the same state: `delegate_model` starts a
+ * continuable subagent on a routed model (named profile, agent-type/task-type
+ * row, or explicit provider/model), and `set_delegation_profile` records the
+ * profile a session was instructed to use. A system-prompt section publishes the
+ * current policy. No credential crosses the wire.
  */
 
+import { CATALOG } from './src/catalog.js'
 import { assertAllowed, buildCatalog, normalizeConfig, resolveRoute } from './src/policy.js'
+import { mergeProfileRow, normalizeProfiles, profileKey, profilesToPolicy } from './src/profiles.js'
+import { BUNDLED_RATES, validateRateCard } from './src/rates.js'
+import { createStateStore, defaultStateDirectory } from './src/state.js'
 
 /** Cordis plugin name. */
 export const name = 'delegation-models'
 
-/** The tool registry, delegation runtime and prompt registry are required. */
-export const inject = ['tools', 'subagents', 'systemPrompt']
+/** Tool, delegation, prompt and HTTP carrier services. */
+export const inject = ['tools', 'subagents', 'systemPrompt', 'webServer']
 
 const DELEGATE_TOOL = 'delegate_model'
 const PROFILE_TOOL = 'set_delegation_profile'
+const ROUTE_PREFIX = '/dsh-delegation-models'
+const BODY_LIMIT = 1_000_000
 
-/** Session-scoped profile overrides recorded by `set_delegation_profile`. */
-const overrides = new WeakMap()
+/** Per-session state: a named profile and/or row overrides, keyed by Session id. */
+const sessionOverrides = new Map()
 
 function isText(value) {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+function sessionIdOf(session) {
+  const id = session?.id ?? session?.header?.id
+  return typeof id === 'string' ? id : undefined
+}
+
+function overridesOf(session) {
+  const id = sessionIdOf(session)
+  return id === undefined ? undefined : sessionOverrides.get(id)
 }
 
 /** Convert the declaration shorthand into the JSON Schema the registry accepts. */
@@ -47,6 +66,20 @@ function parametersToSchema(spec) {
     ...(required.length === 0 ? {} : { required }),
     additionalProperties: false,
   }
+}
+
+/** Merge the persisted state over the plugin row config. */
+function mergedConfig(rawConfig, state) {
+  const rawProfiles = rawConfig !== null && typeof rawConfig === 'object'
+    && rawConfig.profiles !== null && typeof rawConfig.profiles === 'object' && !Array.isArray(rawConfig.profiles)
+    ? rawConfig.profiles
+    : {}
+  return normalizeConfig({
+    ...(rawConfig !== null && typeof rawConfig === 'object' ? rawConfig : {}),
+    profiles: { ...rawProfiles, ...profilesToPolicy(state.profiles ?? {}) },
+    ...state.defaultProfile === undefined ? {} : { defaultProfile: state.defaultProfile },
+    ...Array.isArray(state.allowedModels) && state.allowedModels.length > 0 ? { allowedModels: state.allowedModels } : {},
+  })
 }
 
 /** Live catalog; an unusable settings row never breaks the tool. */
@@ -68,13 +101,33 @@ function catalogFor(ctx, config) {
   return buildCatalog(config, settings, selection)
 }
 
-function profileLines(catalog) {
+/** Apply the session row overrides on top of the catalog. */
+function catalogForSession(ctx, config, session) {
+  const catalog = catalogFor(ctx, config)
+  const rows = overridesOf(session)?.rows
+  if (rows === undefined) return catalog
+  for (const [key, override] of Object.entries(rows)) {
+    const base = catalog.profiles[key]
+    const merged = mergeProfileRow(base, override)
+    if (merged === undefined) continue
+    catalog.profiles[key] = {
+      provider: merged.provider,
+      model: merged.model,
+      ...merged.reasoningEffort === undefined ? {} : { reasoningEffort: merged.reasoningEffort },
+      description: base?.description ?? `${merged.agentType ?? key} · ${merged.taskType ?? ''}`,
+    }
+  }
+  return catalog
+}
+
+function profileLines(catalog, overrides) {
   const lines = []
   for (const [profileName, profile] of Object.entries(catalog.profiles)) {
     const effort = profile.reasoningEffort === undefined ? '' : ` @ ${profile.reasoningEffort}`
     const description = profile.description === undefined ? '' : ` — ${profile.description}`
     const marker = profileName === catalog.defaultProfile ? ' (default)' : ''
-    lines.push(`- ${profileName}${marker}: ${profile.provider}/${profile.model}${effort}${description}`)
+    const overridden = overrides?.rows?.[profileName] === undefined ? '' : ' [session override]'
+    lines.push(`- ${profileName}${marker}: ${profile.provider}/${profile.model}${effort}${description}${overridden}`)
   }
   return lines.join('\n')
 }
@@ -86,57 +139,61 @@ function promptText(ctx, config, delegateTool, context) {
   const catalog = catalogFor(ctx, config)
   if (Object.keys(catalog.profiles).length === 0) return ''
   const agent = context === null || context === undefined ? undefined : context.agent
-  const session = agent === undefined ? undefined : agent.session
-  const override = session === undefined ? undefined : overrides.get(session)
-  const current = override === undefined ? catalog.defaultProfile : override
+  const overrides = agent === undefined ? undefined : overridesOf(agent.session)
+  const current = overrides?.profile ?? catalog.defaultProfile
   return [
     'Delegation model policy:',
-    profileLines(catalog),
-    override === undefined ? `Current delegation default: ${current}.` : `This session was instructed to use profile "${current}" for delegations.`,
-    `When the user names a model or profile for a delegation, honor it: pass provider+model (and reasoning_effort when named) to \`subagent\`, or call \`${DELEGATE_TOOL}\` with the profile name.`,
-    `When no model is named, call \`${DELEGATE_TOOL}\` with the default profile instead of letting the delegation inherit the Lead's route.`,
+    profileLines(catalog, overrides),
+    overrides?.profile === undefined ? `Current delegation default: ${current}.` : `This session was instructed to use profile "${current}" for delegations.`,
+    'When the user names a model, profile, agent type or task type for a delegation, honor it: pass provider+model (and reasoning_effort when named) to `subagent`, or call `delegate_model` with the profile name or agent_type/task_type.',
+    'When no model is named, call `delegate_model` with the default profile instead of letting the delegation inherit the Lead\'s route.',
     `When the user asks to use one model for all delegations in this session, call \`${PROFILE_TOOL}\` with that profile and use it for later delegations.`,
     'Teammates started with `spawn_teammate` inherit the Lead model and take no model argument; when a delegation must use another model, use `delegate_model` instead of a teammate.',
     'Changing the route without naming an effort uses the selected model default.',
   ].join('\n')
 }
 
-/** Build the `delegate_model` tool for the current config. */
-function delegateTool(ctx, config) {
+/** Resolve one requested route from the tool arguments and the session state. */
+function resolveRequestedRoute(catalog, args, sessionProfile) {
+  const explicit = isText(args.provider) || isText(args.model)
+  if (explicit) {
+    return resolveRoute(catalog, {
+      ...(isText(args.provider) ? { provider: args.provider } : {}),
+      ...(isText(args.model) ? { model: args.model } : {}),
+      ...(isText(args.reasoning_effort) ? { reasoning_effort: args.reasoning_effort } : {}),
+    })
+  }
+  if (isText(args.agent_type) && isText(args.task_type)) {
+    const key = profileKey(args.agent_type, args.task_type)
+    if (!Object.hasOwn(catalog.profiles, key)) {
+      throw new Error(`no delegation profile for "${args.agent_type}::${args.task_type}"; available rows: ${Object.keys(catalog.profiles).filter((name) => name.includes('::')).join(', ') || '(none)'}`)
+    }
+    return resolveRoute(catalog, {
+      profile: key,
+      ...(isText(args.reasoning_effort) ? { reasoning_effort: args.reasoning_effort } : {}),
+    })
+  }
+  return resolveRoute(catalog, {
+    ...(isText(args.profile) ? { profile: args.profile } : sessionProfile === undefined ? {} : { profile: sessionProfile }),
+    ...(isText(args.reasoning_effort) ? { reasoning_effort: args.reasoning_effort } : {}),
+  })
+}
+
+/** Build the `delegate_model` tool for the current state. */
+function delegateTool(ctx, getConfig) {
   return {
     name: DELEGATE_TOOL,
-    description: 'Start a continuable subagent delegation on a routed model. Use this when the user names a model or profile for a delegation, or when the default (cheap) profile should apply instead of inheriting the Lead model. The child is a durable continuable subagent: the returned subagentId accepts send_message to steer it while running or continue it after it finishes. Supply profile, or provider+model (and reasoning_effort) together.',
+    description: 'Start a continuable subagent delegation on a routed model. Use it when the user names a model, profile, agent type or task type for a delegation, or when the default (cheap) profile should apply instead of inheriting the Lead model. The child is a durable continuable subagent: the returned subagentId accepts send_message to steer it while running or continue it after it finishes. Supply profile, agent_type+task_type, or provider+model (and reasoning_effort) together.',
     parameters: parametersToSchema({
-      description: {
-        type: 'string',
-        required: true,
-        description: 'A short (3-5 word) description of the delegated task, for display.',
-      },
-      prompt: {
-        type: 'string',
-        required: true,
-        description: 'The complete, self-contained task for the subagent.',
-      },
-      profile: {
-        type: 'string',
-        description: 'Delegation profile name (listed in the delegation model policy). Defaults to the session profile, then the configured default.',
-      },
-      provider: {
-        type: 'string',
-        description: 'Explicit LLM provider route; supply together with model to override the profile.',
-      },
-      model: {
-        type: 'string',
-        description: 'Explicit model id; supply together with provider to override the profile.',
-      },
-      reasoning_effort: {
-        type: 'string',
-        description: 'Adapter-owned reasoning effort for the route. Omit to use the profile effort or the model default.',
-      },
-      cwd: {
-        type: 'string',
-        description: 'Initial child working directory; omitted inherits the parent directory.',
-      },
+      description: { type: 'string', required: true, description: 'A short (3-5 word) description of the delegated task, for display.' },
+      prompt: { type: 'string', required: true, description: 'The complete, self-contained task for the subagent.' },
+      profile: { type: 'string', description: 'Delegation profile name (listed in the delegation model policy). Defaults to the session profile, then the configured default.' },
+      agent_type: { type: 'string', description: 'Agent type id for a row lookup (lead, teammate, subagent, reviewer); supply with task_type.' },
+      task_type: { type: 'string', description: 'Task type id for a row lookup; supply with agent_type.' },
+      provider: { type: 'string', description: 'Explicit LLM provider route; supply together with model to override the profile.' },
+      model: { type: 'string', description: 'Explicit model id; supply together with provider to override the profile.' },
+      reasoning_effort: { type: 'string', description: 'Adapter-owned reasoning effort for the route. Omit to use the profile effort or the model default.' },
+      cwd: { type: 'string', description: 'Initial child working directory; omitted inherits the parent directory.' },
     }),
     output: {
       schema: {
@@ -160,14 +217,9 @@ function delegateTool(ctx, config) {
     async execute(args, exec) {
       const parent = exec.agent
       if (parent === undefined) throw new Error(`${DELEGATE_TOOL} requires a calling agent`)
-      const catalog = catalogFor(ctx, config)
-      const sessionProfile = overrides.get(parent.session)
-      const route = resolveRoute(catalog, {
-        ...(isText(args.profile) ? { profile: args.profile } : sessionProfile === undefined ? {} : { profile: sessionProfile }),
-        ...(isText(args.provider) ? { provider: args.provider } : {}),
-        ...(isText(args.model) ? { model: args.model } : {}),
-        ...(isText(args.reasoning_effort) ? { reasoning_effort: args.reasoning_effort } : {}),
-      })
+      const config = getConfig()
+      const catalog = catalogForSession(ctx, config, parent.session)
+      const route = resolveRequestedRoute(catalog, args, overridesOf(parent.session)?.profile)
       assertAllowed(route, catalog.allowedModels)
       const llm = ctx.get('llm')
       if (llm !== undefined && typeof llm.resolveCallConfig === 'function') {
@@ -209,29 +261,20 @@ function delegateTool(ctx, config) {
   }
 }
 
-/** Build the `set_delegation_profile` tool for the current config. */
-function profileTool(ctx, config) {
+/** Build the `set_delegation_profile` tool for the current state. */
+function profileTool(ctx, getConfig) {
   return {
     name: PROFILE_TOOL,
     description: 'Record the delegation model profile for the rest of this session, or clear it. Use it when the user asks that subsequent delegations use a specific model or profile.',
     parameters: parametersToSchema({
-      profile: {
-        type: 'string',
-        description: 'Profile name to apply to later delegations in this session.',
-      },
-      clear: {
-        type: 'boolean',
-        description: 'Set true to remove the session profile instead.',
-      },
+      profile: { type: 'string', description: 'Profile name to apply to later delegations in this session.' },
+      clear: { type: 'boolean', description: 'Set true to remove the session profile instead.' },
     }),
     output: {
       schema: {
         type: 'object',
         additionalProperties: false,
-        properties: {
-          profile: { type: 'string' },
-          cleared: { type: 'boolean' },
-        },
+        properties: { profile: { type: 'string' }, cleared: { type: 'boolean' } },
       },
       render: (_args, value) => [{
         type: 'text',
@@ -241,34 +284,181 @@ function profileTool(ctx, config) {
     async execute(args, exec) {
       const parent = exec.agent
       if (parent === undefined) throw new Error(`${PROFILE_TOOL} requires a calling agent`)
+      const id = sessionIdOf(parent.session)
+      if (id === undefined) throw new Error(`${PROFILE_TOOL} requires a Session identity`)
+      const existing = sessionOverrides.get(id) ?? { rows: {} }
       if (args.clear === true) {
-        overrides.delete(parent.session)
+        sessionOverrides.set(id, { ...existing, profile: undefined })
         return { cleared: true }
       }
-      const catalog = catalogFor(ctx, config)
+      const catalog = catalogFor(ctx, getConfig())
       const name = isText(args.profile) ? args.profile : catalog.defaultProfile
       if (name === undefined) throw new Error('no delegation profile is configured')
       if (!Object.hasOwn(catalog.profiles, name)) {
         throw new Error(`unknown delegation profile "${name}"; available profiles: ${Object.keys(catalog.profiles).join(', ') || '(none)'}`)
       }
-      overrides.set(parent.session, name)
+      sessionOverrides.set(id, { ...existing, profile: name })
       return { profile: name }
     },
   }
 }
 
+function writeJson(res, status, body) {
+  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+  res.end(JSON.stringify(body))
+}
+
+function readJson(req) {
+  return new Promise((resolve, reject) => {
+    let size = 0
+    const chunks = []
+    req.on('data', (chunk) => {
+      size += chunk.length
+      if (size > BODY_LIMIT) {
+        reject(new Error('request body too large'))
+        req.destroy()
+        return
+      }
+      chunks.push(chunk)
+    })
+    req.on('end', () => {
+      try {
+        const text = Buffer.concat(chunks).toString('utf8')
+        resolve(text.length === 0 ? {} : JSON.parse(text))
+      } catch {
+        reject(new Error('invalid JSON body'))
+      }
+    })
+    req.on('error', reject)
+  })
+}
+
+function normalizeAllowedModels(value) {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((entry) => entry !== null && typeof entry === 'object'
+      && isText(entry.provider) && isText(entry.model))
+    .map((entry) => ({ provider: entry.provider, model: entry.model }))
+}
+
+function normalizeSource(value) {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined
+  if (value.kind !== 'file' && value.kind !== 'paste') return undefined
+  return {
+    kind: value.kind,
+    ...isText(value.path) ? { path: value.path } : {},
+    ...typeof value.text === 'string' ? { text: value.text } : {},
+    ...typeof value.autoApply === 'boolean' ? { autoApply: value.autoApply } : {},
+  }
+}
+
 export function apply(ctx, rawConfig) {
-  const config = normalizeConfig(rawConfig)
-  const delegate = delegateTool(ctx, config)
-  const profile = profileTool(ctx, config)
+  const store = createStateStore(defaultStateDirectory())
+  let state = store.read()
+  const getConfig = () => mergedConfig(rawConfig, state)
+  const delegate = delegateTool(ctx, getConfig)
+  const profile = profileTool(ctx, getConfig)
+
   ctx.effect(() => ctx.tools.register(delegate), 'delegation-models: delegate tool')
   ctx.effect(() => ctx.tools.register(profile), 'delegation-models: profile tool')
   ctx.effect(
     () => ctx.systemPrompt.section({
       name: 'delegation:models',
       order: ctx.systemPrompt.getSectionOrder('TOOL_SUBAGENT'),
-      text: (context) => promptText(ctx, config, delegate, context),
+      text: (context) => promptText(ctx, getConfig(), delegate, context),
     }),
     'delegation-models: prompt',
   )
+
+  const routes = [
+    {
+      path: `${ROUTE_PREFIX}/state`,
+      handler: async (req, res) => {
+        writeJson(res, 200, {
+          ok: true,
+          catalog: CATALOG,
+          state: {
+            profiles: state.profiles,
+            defaultProfile: state.defaultProfile,
+            allowedModels: state.allowedModels,
+            rates: state.rates,
+            source: state.source,
+          },
+          policy: profilesToPolicy(state.profiles),
+        })
+      },
+    },
+    {
+      path: `${ROUTE_PREFIX}/profiles`,
+      handler: async (req, res) => {
+        const body = await readJson(req)
+        const result = normalizeProfiles(body.profiles)
+        if (!result.ok) {
+          writeJson(res, 400, { ok: false, errors: result.errors })
+          return
+        }
+        const defaultProfile = isText(body.defaultProfile) ? body.defaultProfile : undefined
+        if (defaultProfile !== undefined && !Object.hasOwn(result.profiles, defaultProfile)) {
+          writeJson(res, 400, { ok: false, errors: [`defaultProfile "${defaultProfile}" is not a profile row`] })
+          return
+        }
+        state = store.write({
+          profiles: result.profiles,
+          defaultProfile,
+          allowedModels: normalizeAllowedModels(body.allowedModels),
+        })
+        writeJson(res, 200, { ok: true, state: { profiles: state.profiles, defaultProfile: state.defaultProfile } })
+      },
+    },
+    {
+      path: `${ROUTE_PREFIX}/rates`,
+      handler: async (req, res) => {
+        const body = await readJson(req)
+        const result = validateRateCard(body.rates)
+        if (!result.ok) {
+          writeJson(res, 400, { ok: false, errors: result.errors })
+          return
+        }
+        state = store.write({ rates: result.card })
+        writeJson(res, 200, { ok: true, rates: state.rates })
+      },
+    },
+    {
+      path: `${ROUTE_PREFIX}/source`,
+      handler: async (req, res) => {
+        const body = await readJson(req)
+        const source = normalizeSource(body.source)
+        if (source === undefined) {
+          writeJson(res, 400, { ok: false, errors: ['source must be { kind: "file"|"paste", path?, text?, autoApply? }'] })
+          return
+        }
+        state = store.write({ source })
+        writeJson(res, 200, { ok: true, source: state.source })
+      },
+    },
+    {
+      path: `${ROUTE_PREFIX}/overrides`,
+      handler: async (req, res) => {
+        const body = await readJson(req)
+        if (!isText(body.sessionId)) {
+          writeJson(res, 400, { ok: false, errors: ['sessionId is required'] })
+          return
+        }
+        const existing = sessionOverrides.get(body.sessionId) ?? { rows: {} }
+        const rows = body.rows !== null && typeof body.rows === 'object' && !Array.isArray(body.rows) ? body.rows : existing.rows
+        sessionOverrides.set(body.sessionId, {
+          profile: isText(body.profile) ? body.profile : existing.profile,
+          rows,
+        })
+        writeJson(res, 200, { ok: true, overrides: sessionOverrides.get(body.sessionId) })
+      },
+    },
+  ]
+
+  for (const route of routes) {
+    ctx.effect(
+      () => ctx.webServer.register({ kind: 'exact', path: route.path, handler: route.handler }),
+      `delegation-models: route ${route.path}`,
+    )
+  }
 }

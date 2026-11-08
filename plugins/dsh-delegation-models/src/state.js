@@ -6,7 +6,7 @@
  * host never require a writable home. Writes are atomic (temp file + rename).
  */
 
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { BUNDLED_RATES } from './rates.js'
 
@@ -28,7 +28,19 @@ export function defaultState() {
 /** Resolve the default state directory from the harness environment. */
 export function defaultStateDirectory() {
   const profile = process.env.DSH_PROFILE_DIR
-  return profile === undefined || profile.length === 0 ? undefined : profile
+  if (profile !== undefined && profile.length > 0) return profile
+  // The desktop host passes its profile directory as an argv entry rather than
+  // exporting DSH_PROFILE_DIR; use it when it is a real directory.
+  for (const arg of process.argv) {
+    if (typeof arg !== 'string') continue
+    if (!arg.includes('/profiles/') && !arg.includes('\\profiles\\')) continue
+    try {
+      if (statSync(arg).isDirectory()) return arg
+    } catch {
+      // Not the profile directory.
+    }
+  }
+  return undefined
 }
 
 /**

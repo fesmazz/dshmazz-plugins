@@ -22,6 +22,9 @@ releases and repository-level changes.
 - V1.1 host foundation: bundled category catalog, bundled rate card with
   validation and cost estimation, token-usage folding, and an atomic JSON state
   store for profiles/rates/source; covered by 15 `node --test` cases.
+- V1.1 profile rows and host routes: agent-type × task-type rows with validation,
+  per-session row overrides, `state`/`profiles`/`rates`/`source`/`overrides`
+  routes, dynamic tool routing through rows, and profile unit tests (34 total).
 
 ## 2026-11-07 — repository 0.2.0
 
