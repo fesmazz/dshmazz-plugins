@@ -42,6 +42,9 @@ releases and repository-level changes.
   in the state and UI; watcher covered by tests (46 total).
 - Released [`@mazz/dsh-delegation-models` 0.2.0](plugins/dsh-delegation-models/CHANGELOG.md)
   — V1.1 complete plus V1.2 teammate-routing feature detection.
+- Released [`@mazz/dsh-delegation-models` 0.3.0](plugins/dsh-delegation-models/CHANGELOG.md)
+  — V1.2 teammate routing behind feature detection, rewritten usage documentation,
+  and a verified harness patch README.
 
 ## 2026-11-07 — repository 0.2.0
 

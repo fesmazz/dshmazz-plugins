@@ -1,5 +1,19 @@
 # Changelog — @mazz/dsh-delegation-models
 
+## [0.3.0] - 2026-11-08
+
+### Changed
+- V1.2 teammate routing is complete behind feature detection: teammate rows are
+  published with a capability-aware prompt and a status line in both UI surfaces,
+  and the four modes (`patched`, `native`, `unpatched`, `unsupported`) are covered
+  by unit tests.
+- Documentation rewritten for the V1.1 surfaces, routes, auto-configure watcher and
+  V1.2 detection; the harness patch README records the reverse-apply verification
+  and the stock-build limitation.
+
+### Tests
+- 50 `node --test` cases.
+
 ## [0.2.0] - 2026-11-08
 
 ### Added

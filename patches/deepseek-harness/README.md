@@ -1,7 +1,9 @@
 # DeepSeek Harness extension: teammate model routing
 
-Status: **local patch against DeepSeek Harness 0.2.1-rc.5, authored 2026-11-08. Not
-applied to the installed app.** The plugin's V1.2 UI feature-detects it.
+Status: **local patch against DeepSeek Harness 0.2.1-rc.5, authored 2026-11-08.
+`git apply --check` passes; not built (the harness dependency tree is not installed
+here) and not applied to the installed app.** The plugin's V1.2 UI feature-detects
+it.
 
 ## What the patch changes
 
@@ -17,6 +19,22 @@ applied to the installed app.** The plugin's V1.2 UI feature-detects it.
 The backend provider name already occupies `provider` on the request, so the child
 LLM route is carried as `agentOptions` rather than three request fields that would
 collide with it.
+
+## How the plugin detects it
+
+`GET /dsh-delegation-models/state` exposes `teammates.mode`, computed from one live
+agent's visible tool schemas (`ctx.tools.schemas(agent)`):
+
+- `spawn_teammate` present with `provider` and `model` in its parameters →
+  `patched`;
+- `spawn_teammate` present without them → `unpatched`;
+- no `spawn_teammate` but a `subagent` tool → `native` (or `native-unselected` when
+  model selection is off);
+- neither → `unsupported`.
+
+The exact parameters of the stock tool are reported as
+`name/description/prompt/context`, and the policy prompt then directs
+model-specific work to `delegate_model`.
 
 ## Apply and test
 
@@ -39,13 +57,13 @@ the change, rebuild the harness from source or ship the patch upstream.
 The installed app is 0.2.1-rc.5, where `spawn_teammate` exists without model fields.
 Upstream 0.2.2-rc.1 removed `spawn_teammate`; teammates are continuable subagents
 created by the subagent tool, which already exposes `provider`, `model`, and
-`reasoning_effort`. On 0.2.2+ the V1.2 UI should feature-detect that route and no
-patch is needed.
+`reasoning_effort`. On 0.2.2+ the V1.2 UI feature-detects that route and no patch
+is needed.
 
 ## Limitations
 
 - `spawn_teammate` does not check the route against `subagentModelSelection` allowed
   models; the team tool does not read that service. Add that check in the tool or
   the team service if the policy must apply to teammates.
-- The patch was not built or run in this workspace (the harness dependency tree is
-  not installed); treat the checks above as the verification plan.
+- The patch was not built or run in this workspace; the checks above are the
+  verification plan.
