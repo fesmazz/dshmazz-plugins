@@ -911,10 +911,11 @@ window.__ModuleLoader__.load({
     }
 
 
-    function Breakdown({ t, breakdown, currency }) {
+    function Breakdown({ t, breakdown, currency, width }) {
       const projects = breakdown.projects === undefined ? [] : breakdown.projects
       const sessions = breakdown.sessions === undefined ? [] : breakdown.sessions
       const categories = breakdown.categories === undefined ? [] : breakdown.categories
+      const donutSize = Math.max(120, Math.min(166, Math.floor((width - 42 - 12) / 2)))
       const palette = ['#3aa0ff', '#f5a623', '#3fbf7f', '#c084fc', '#ff6464', '#5ac8fa', '#e879f9']
       const compact = (rows) => {
         if (rows.length <= 6) return rows
@@ -925,66 +926,52 @@ window.__ModuleLoader__.load({
       const [hover, setHover] = React.useState(null)
       const projectPalette = ['#3aa0ff', '#3fbf7f', '#c084fc', '#5ac8fa', '#8ea3b8', '#e879f9', '#7fd1ff']
       const categoryPalette = ['#f5a623', '#ff6464', '#e879f9', '#3fbf7f', '#5ac8fa', '#fbbf24', '#a78bfa']
-      const donut = (label, rows, palette) => {
+      const donut = (label, rows, palette, size) => {
         const data = compact(rows)
         const total = data.reduce((sum, row) => sum + row.cost, 0)
-        const size = 160
-        const center = 80
-        const radius = 36
-        const ring = 7
+        const band = Math.max(10, Math.round((size * 19) / 166))
+        const center = size / 2
+        const radius = center - 2 - band / 2
         const circumference = 2 * Math.PI * radius
         let offset = 0
-        const labels = []
         const segments = total <= 0
-          ? [h('circle', { key: 'empty', cx: center, cy: center, r: radius, fill: 'none', stroke: '#25405a', strokeWidth: ring })]
+          ? [h('circle', { key: 'empty', cx: center, cy: center, r: radius, fill: 'none', stroke: '#25405a', strokeWidth: band })]
           : data.map((row, index) => {
               const fraction = total > 0 ? row.cost / total : 0
               const dash = fraction * circumference
-              const color = palette[index % palette.length]
               const segment = h('circle', {
                 key: row.name,
                 cx: center,
                 cy: center,
                 r: radius,
                 fill: 'none',
-                stroke: color,
-                strokeWidth: ring,
+                stroke: palette[index % palette.length],
+                strokeWidth: band,
                 strokeDasharray: dash + ' ' + (circumference - dash),
                 strokeDashoffset: String(-offset),
                 transform: 'rotate(-90 ' + center + ' ' + center + ')',
                 style: { cursor: 'pointer' },
-                onMouseEnter: () => setHover({ chart: label, name: row.name, cost: row.cost, percent: total > 0 ? (row.cost / total) * 100 : 0 }),
+                onMouseEnter: () => setHover({ chart: label, name: row.name, cost: row.cost, percent: fraction * 100 }),
                 onMouseLeave: () => setHover(null),
               })
               offset += dash
-              if (fraction >= 0.14) {
-                const mid = ((-90 + ((offset - dash / 2) / circumference) * 360) * Math.PI) / 180
-                const inner = radius + ring / 2 + 2
-                const outer = radius + 16
-                const x1 = center + Math.cos(mid) * inner
-                const y1 = center + Math.sin(mid) * inner
-                const x2 = center + Math.cos(mid) * outer
-                const y2 = center + Math.sin(mid) * outer
-                const right = Math.cos(mid) >= 0
-                const name = row.name.length > 12 ? row.name.slice(0, 11) + '…' : row.name
-                labels.push(h('g', { key: 'lbl-' + row.name },
-                  h('line', { x1, y1, x2, y2, stroke: color, strokeWidth: 1, opacity: 0.8 }),
-                  h('text', { x: right ? x2 + 3 : x2 - 3, y: y2 + 3, textAnchor: right ? 'start' : 'end', fill: '#b8c7d6', fontSize: 8.5, fontFamily: C.font }, name),
-                ))
-              }
               return segment
             })
         return h(
           'div',
-          { style: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' } },
+          { style: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' } },
           hover !== null && hover.chart === label
             ? h('div', { style: { position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', background: '#0b1622', border: '1px solid #25405a', borderRadius: '6px', padding: '3px 6px', fontSize: '10px', whiteSpace: 'nowrap', zIndex: 2 } },
                 hover.name + ' · ' + formatCost(hover.cost, currency) + ' (' + hover.percent.toFixed(0) + '%)')
             : null,
-          h('svg', { width: size, height: size, viewBox: '0 0 ' + size + ' ' + size, role: 'img', 'aria-label': label }, [
-            h('g', { key: 'segments' }, segments),
-            h('g', { key: 'labels' }, labels),
-          ]),
+          h('svg', { width: size, height: size, viewBox: '0 0 ' + size + ' ' + size, role: 'img', 'aria-label': label }, segments),
+          h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' } },
+            data.map((row, index) => h('div', { key: row.name, style: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9.5px', color: '#b8c7d6' } },
+              h('span', { style: { width: '6px', height: '6px', borderRadius: '50%', background: palette[index % palette.length] } }),
+              row.name,
+              total > 0 ? h('span', { style: { color: '#657a8f' } }, Math.round((row.cost / total) * 100) + '%') : null,
+            )),
+          ),
           h('div', { style: { fontSize: '10px', color: '#8ea3b8' } }, label),
         )
       }
@@ -1009,7 +996,7 @@ window.__ModuleLoader__.load({
         'div',
         { style: { display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #1e3349', paddingTop: '10px' } },
         h('div', { style: { fontSize: '12px', fontWeight: 600 } }, t('panel.breakdown')),
-        h('div', { style: { display: 'flex', justifyContent: 'space-around', gap: '8px' } }, [donut(t('panel.byProject'), projects, projectPalette), donut(t('panel.byKind'), categories.map((category) => ({ ...category, name: t('kind.' + category.name) })), categoryPalette)]),
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '12px', padding: '0 21px' } }, [donut(t('panel.byProject'), projects, projectPalette, donutSize), donut(t('panel.byKind'), categories.map((category) => ({ ...category, name: t('kind.' + category.name) })), categoryPalette, donutSize)]),
         h('table', { style: { width: '100%', borderCollapse: 'collapse', fontSize: '12px' } },
           h('thead', null, h('tr', null,
             h('th', { style: { textAlign: 'left', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.project')),
@@ -1199,7 +1186,7 @@ window.__ModuleLoader__.load({
           ),
         )
         if (data.breakdown !== undefined) {
-          content.push(h(Breakdown, { key: 'breakdown', t, breakdown: data.breakdown, currency }))
+          content.push(h(Breakdown, { key: 'breakdown', t, breakdown: data.breakdown, currency, width }))
         }
         content.push(
           h(

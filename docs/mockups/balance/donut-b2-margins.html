@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:18px;display:flex;gap:16px}
+.card{width:392px;background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:16px}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+h3{margin:0 0 12px;font-size:13px}
+.row{display:flex;justify-content:space-evenly;align-items:flex-start;gap:10px;padding:6px 0 2px}
+.unit{display:flex;flex-direction:column;align-items:center;gap:7px}
+.donut{border-radius:50%;-webkit-mask:radial-gradient(circle closest-side, transparent calc(100% - var(--ring)), #000 calc(100% - var(--ring)));mask:radial-gradient(circle closest-side, transparent calc(100% - var(--ring)), #000 calc(100% - var(--ring)))}
+.proj{background:conic-gradient(#3aa0ff 0 100%)}
+.kind{background:conic-gradient(#f5a623 0 61%, #ff6464 61% 100%)}
+.leader{width:1px;height:8px;background:#4a6b85}
+.lbl{font-size:9.5px;color:#b8c7d6;text-align:center;line-height:1.35}
+.note{font-size:10px;color:#657a8f;margin-top:14px;line-height:1.45}
+</style></head><body>
+<div class="card"><div class="tag">B2-A — wider fill, tighter side margins</div><h3>Consumption</h3>
+<div class="row" style="padding:2px 0 0">
+<div class="unit"><div class="donut proj" style="width:170px;height:170px;--ring:20px"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut kind" style="width:170px;height:170px;--ring:20px"></div><div class="leader"></div><div class="lbl">Chat 61%<br>Sub-agent 39%</div></div>
+</div><div class="note">170px rings with a 20px band; side margins cut to ~8px so the charts fill the card width; vertical padding kept light.</div></div>
+<div class="card"><div class="tag">B2-B — edge-to-edge, larger diameter (recommended)</div><h3>Consumption</h3>
+<div class="row" style="padding:0;justify-content:space-between">
+<div class="unit"><div class="donut proj" style="width:182px;height:182px;--ring:18px"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut kind" style="width:182px;height:182px;--ring:18px"></div><div class="leader"></div><div class="lbl">Chat 61%<br>Sub-agent 39%</div></div>
+</div><div class="note">182px rings nearly touch the card edges (4px margins, 8px gutter) with an 18px band; maximum fill area while labels stay below.</div></div>
+<div class="card"><div class="tag">B2-C — thick band, balanced margins</div><h3>Consumption</h3>
+<div class="row" style="padding:4px 0">
+<div class="unit"><div class="donut proj" style="width:164px;height:164px;--ring:24px"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut kind" style="width:164px;height:164px;--ring:24px"></div><div class="leader"></div><div class="lbl">Chat 61%<br>Sub-agent 39%</div></div>
+</div><div class="note">164px rings with a 24px band (most colour), 14px side margins and a 12px gutter; a heavier, more graphic look.</div></div>
+</body></html>

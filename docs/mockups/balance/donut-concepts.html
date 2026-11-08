@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:18px;display:flex;gap:16px}
+.card{width:380px;background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:14px}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+h3{margin:0 0 10px;font-size:13px}
+.row{display:flex;justify-content:space-around;align-items:flex-start;gap:6px}
+.unit{display:flex;flex-direction:column;align-items:center;gap:6px}
+.donut{border-radius:50%;-webkit-mask:radial-gradient(circle, transparent var(--hole), #000 var(--hole))}
+.blue{background:conic-gradient(#3aa0ff 0 100%)}
+.two{background:conic-gradient(#f5a623 0 61%, #ff6464 61% 100%)}
+.three{background:conic-gradient(#3aa0ff 0 45%, #3fbf7f 45% 75%, #c084fc 75% 100%)}
+.lbl{font-size:9.5px;color:#b8c7d6;text-align:center;max-width:130px}
+.leader{width:1px;height:10px;background:#4a6b85;margin:0 auto}
+.note{font-size:10px;color:#657a8f;margin-top:10px;line-height:1.4}
+</style></head><body>
+<div class="card"><div class="tag">Concept A — thicker ring, same footprint</div><h3>Consumption</h3>
+<div class="row">
+<div class="unit"><div class="donut blue" style="width:150px;height:150px;--hole:38%"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut two" style="width:150px;height:150px;--hole:38%"></div><div class="leader"></div><div class="lbl">Chat 61% · Sub-agent 39%</div></div>
+</div><div class="note">Ring ~18px (was ~7px). Same 150px diameter, so both fit side by side; labels move below each ring to stop clipping.</div></div>
+<div class="card"><div class="tag">Concept B — larger and thicker (recommended)</div><h3>Consumption</h3>
+<div class="row">
+<div class="unit"><div class="donut three" style="width:168px;height:168px;--hole:36%"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut two" style="width:168px;height:168px;--hole:36%"></div><div class="leader"></div><div class="lbl">Chat 61% · Sub-agent 39%</div></div>
+</div><div class="note">168px diameter with a ~23px ring; still fits two across in the sidebar. Labels sit below with a short leader, so no clipped side text.</div></div>
+<div class="card"><div class="tag">Concept C — stacked, largest rings</div><h3>Consumption</h3>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+<div class="unit"><div class="donut three" style="width:190px;height:190px;--hole:33%"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut two" style="width:190px;height:190px;--hole:33%"></div><div class="leader"></div><div class="lbl">Chat 61% · Sub-agent 39%</div></div>
+</div><div class="note">190px diameter and a ~32px ring, one doughnut per row. Clearest labels and biggest visual weight, but uses the most vertical space.</div></div>
+</body></html>

@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:18px;display:flex;gap:16px}
+.card{width:392px;background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:16px}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+h3{margin:0 0 14px;font-size:13px}
+.row{display:flex;justify-content:space-evenly;align-items:flex-start;gap:10px;padding:6px 0 2px}
+.unit{display:flex;flex-direction:column;align-items:center;gap:7px}
+.donut{border-radius:50%;-webkit-mask:radial-gradient(circle closest-side, transparent calc(100% - var(--ring)), #000 calc(100% - var(--ring)));mask:radial-gradient(circle closest-side, transparent calc(100% - var(--ring)), #000 calc(100% - var(--ring)))}
+.proj{background:conic-gradient(#3aa0ff 0 100%)}
+.kind{background:conic-gradient(#f5a623 0 61%, #ff6464 61% 100%)}
+.leader{width:1px;height:8px;background:#4a6b85}
+.lbl{font-size:9.5px;color:#b8c7d6;text-align:center;line-height:1.35}
+.note{font-size:10px;color:#657a8f;margin-top:16px;line-height:1.45}
+</style></head><body>
+<div class="card"><div class="tag">B1 — ring 15px · padding 18px</div><h3>Consumption</h3>
+<div class="row">
+<div class="unit"><div class="donut proj" style="width:160px;height:160px;--ring:15px"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut kind" style="width:160px;height:160px;--ring:15px"></div><div class="leader"></div><div class="lbl">Chat 61%<br>Sub-agent 39%</div></div>
+</div><div class="note">Same 160px footprint as concept B, ring reduced from ~23px to 15px; extra padding around the row and between the two charts.</div></div>
+<div class="card"><div class="tag">B2 — ring 13px · padding 22px (recommended)</div><h3>Consumption</h3>
+<div class="row">
+<div class="unit"><div class="donut proj" style="width:156px;height:156px;--ring:13px"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut kind" style="width:156px;height:156px;--ring:13px"></div><div class="leader"></div><div class="lbl">Chat 61%<br>Sub-agent 39%</div></div>
+</div><div class="note">Slightly smaller 156px rings with a 13px band and more breathing room; labels keep the short leader below.</div></div>
+<div class="card"><div class="tag">B3 — ring 12px · padding 26px</div><h3>Consumption</h3>
+<div class="row">
+<div class="unit"><div class="donut proj" style="width:150px;height:150px;--ring:12px"></div><div class="leader"></div><div class="lbl">Projects</div></div>
+<div class="unit"><div class="donut kind" style="width:150px;height:150px;--ring:12px"></div><div class="leader"></div><div class="lbl">Chat 61%<br>Sub-agent 39%</div></div>
+</div><div class="note">Airier still: 150px rings, thin 12px band and the largest surrounding padding; closest to a light dashboard feel.</div></div>
+</body></html>

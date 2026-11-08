@@ -1,5 +1,12 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.8] - 2026-11-08
+
+### Changed
+- Doughnuts now use the approved C2 geometry: larger rings with a 19px band
+  (scaled to the available width), 21px side margins and a 12px gutter. Labels
+  move below each ring; the hover overlay still covers every slice.
+
 ## [1.3.7] - 2026-11-08
 
 ### Changed
