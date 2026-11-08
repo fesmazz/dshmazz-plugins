@@ -1,4 +1,4 @@
-# Rules for agents in dsh-mazz-plugins
+# Rules for agents in dshmazz-plugins
 
 Hundun (`~/Projects/Hundun`) is the shared source of truth (HD-0001). Read its
 `AGENTS.md`, `CURRENT_STATE.md` and `STATUS.md` first. This file adds
@@ -57,5 +57,5 @@ installable bundle under `plugins/<name>/`, named `@mazz/dsh-<topic>`.
   `rules/context-costs.md` and `rules/safety.md`.
 - Work on a short-lived branch per task once a remote exists; a brand-new
   repository's initial commit may land on `main`.
-- Record milestones in Hundun: the `repositories/dsh-mazz-plugins/` page,
+- Record milestones in Hundun: the `repositories/dshmazz-plugins/` page,
   `sessions/YYYY/MM/`, `CURRENT_STATE.md` and `STATUS.md`.

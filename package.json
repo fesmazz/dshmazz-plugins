@@ -1,7 +1,8 @@
 {
-  "name": "dsh-mazz-plugins",
+  "name": "dshmazz-plugins",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "test": "node --test"

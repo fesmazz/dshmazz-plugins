@@ -2,6 +2,7 @@
   "name": "@mazz/dsh-token-balance",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Shows DeepSeek token usage and the remaining account balance below the composer.",
   "exports": {

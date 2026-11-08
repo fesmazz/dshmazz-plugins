@@ -15,7 +15,7 @@ the `@mazz/` scope.
 Install a plugin bundle from this checkout:
 
 ```sh
-dsh plugin --profile web add /absolute/path/to/dsh-mazz-plugins/plugins/dsh-token-balance
+dsh plugin --profile web add /absolute/path/to/dshmazz-plugins/plugins/dsh-token-balance
 ```
 
 Then restart `dsh web` (or refresh the Web UI) and enable the plugin under
@@ -42,4 +42,4 @@ cd plugins/dsh-token-balance && node --test
 
 ## Licence
 
-Not yet chosen (owner decision).
+MIT — see [LICENSE](LICENSE).

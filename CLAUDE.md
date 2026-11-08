@@ -1,4 +1,4 @@
-# CLAUDE.md: dsh-mazz-plugins
+# CLAUDE.md: dshmazz-plugins
 
 @AGENTS.md
 
