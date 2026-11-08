@@ -242,6 +242,21 @@ export function projectOf(header) {
 }
 
 /**
+ * Classify one session for the breakdown doughnut.
+ * @param header - session header.
+ * @param title - resolved GUI title, when known.
+ * @returns `chat`, `team`, `sub-agent` or `undefined`.
+ */
+export function sessionKind(header, title) {
+  if (header === null || typeof header !== 'object') return 'undefined'
+  const label = String(title ?? '') + ' ' + String(header.agentPreset ?? '')
+  if (/\bteammate\b|\bteam\b/i.test(label)) return 'team'
+  if (header.origin === 'subagent' || header.parentSession !== undefined) return 'sub-agent'
+  if (header.id !== undefined || typeof header.cwd === 'string' || typeof header.workspace === 'string') return 'chat'
+  return 'undefined'
+}
+
+/**
  * Group usage records by project and by session.
  * @param records - usage records with `sessionId`.
  * @param metaById - Map of session id to `{ header }`.
@@ -261,7 +276,7 @@ export function sessionBreakdown(records, metaById, costOf = () => 0) {
       : header?.origin === 'subagent'
         ? 'sub-agent - ' + project + ' - ' + (typeof header?.agentPreset === 'string' ? header.agentPreset : 'task')
         : id
-    const entry = sessions.get(id) ?? { id, title, project, cost: 0, totalTokens: 0, requests: 0 }
+    const entry = sessions.get(id) ?? { id, title, project, kind: sessionKind(header, title), cost: 0, totalTokens: 0, requests: 0 }
     entry.cost += Number.isFinite(costOf(record)) ? costOf(record) : 0
     entry.totalTokens += Number.isFinite(record.totalTokens) ? record.totalTokens : 0
     entry.requests += Number.isFinite(record.requests) ? record.requests : 1
@@ -276,11 +291,20 @@ export function sessionBreakdown(records, metaById, costOf = () => 0) {
     project.sessions.push(session)
     projects.set(session.project, project)
   }
+  const categoryMap = new Map()
+  for (const session of sessions.values()) {
+    const category = categoryMap.get(session.kind) ?? { name: session.kind, cost: 0, totalTokens: 0, requests: 0 }
+    category.cost += session.cost
+    category.totalTokens += session.totalTokens
+    category.requests += session.requests
+    categoryMap.set(session.kind, category)
+  }
   const sortedSessions = [...sessions.values()].sort((a, b) => b.cost - a.cost || a.id.localeCompare(b.id))
   for (const project of projects.values()) project.sessions.sort((a, b) => b.cost - a.cost || a.id.localeCompare(b.id))
   return {
     projects: [...projects.values()].sort((a, b) => b.cost - a.cost || a.name.localeCompare(b.name)),
     sessions: sortedSessions,
+    categories: [...categoryMap.values()].sort((a, b) => b.cost - a.cost || a.name.localeCompare(b.name)),
   }
 }
 

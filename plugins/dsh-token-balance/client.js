@@ -48,6 +48,12 @@ window.__ModuleLoader__.load({
       'panel.breakdown': 'Consumption',
       'panel.byProject': 'By project',
       'panel.bySession': 'By session',
+      'panel.byKind': 'By session kind',
+      'panel.kind': 'Kind',
+      'kind.chat': 'Chat',
+      'kind.team': 'Team member',
+      'kind.sub-agent': 'Sub-agent',
+      'kind.undefined': 'Undefined',
       'panel.project': 'Project',
       'panel.session': 'Session',
       'panel.other': 'Other',
@@ -114,6 +120,12 @@ window.__ModuleLoader__.load({
       'panel.breakdown': '消费构成',
       'panel.byProject': '按项目',
       'panel.bySession': '按会话',
+      'panel.byKind': '按会话类型',
+      'panel.kind': '类型',
+      'kind.chat': '对话',
+      'kind.team': '团队成员',
+      'kind.sub-agent': '子代理',
+      'kind.undefined': '未定义',
       'panel.project': '项目',
       'panel.session': '会话',
       'panel.other': '其他',
@@ -902,6 +914,7 @@ window.__ModuleLoader__.load({
     function Breakdown({ t, breakdown, currency }) {
       const projects = breakdown.projects === undefined ? [] : breakdown.projects
       const sessions = breakdown.sessions === undefined ? [] : breakdown.sessions
+      const categories = breakdown.categories === undefined ? [] : breakdown.categories
       const palette = ['#3aa0ff', '#f5a623', '#3fbf7f', '#c084fc', '#ff6464', '#5ac8fa', '#e879f9']
       const compact = (rows) => {
         if (rows.length <= 6) return rows
@@ -948,18 +961,27 @@ window.__ModuleLoader__.load({
             : null,
           h('svg', { width: size, height: size, viewBox: '0 0 ' + size + ' ' + size, role: 'img', 'aria-label': label }, segments),
           h('div', { style: { fontSize: '11px', color: '#8ea3b8' } }, label),
+          h('div', { style: { display: 'flex', flexDirection: 'column', gap: '1px', alignItems: 'center', maxWidth: '130px' } },
+            data.map((row, index) => h('div', { key: row.name, style: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9.5px', color: '#8ea3b8' } },
+              h('span', { style: { width: '6px', height: '6px', borderRadius: '50%', background: palette[index % palette.length] } }),
+              row.name,
+              h('span', { style: { color: '#657a8f' } }, total > 0 ? ' ' + Math.round((row.cost / total) * 100) + '%' : ''),
+            )),
+          ),
         )
       }
       const rows = []
       for (const project of projects) {
         rows.push(h('tr', { key: 'p-' + project.name, style: { borderTop: '1px solid #1e3349' } },
           h('td', { style: { padding: '4px 6px', fontWeight: 600 } }, project.name),
+          h('td', { style: { padding: '4px 6px', color: '#657a8f', fontSize: '11px' } }, '—'),
           h('td', { style: { padding: '4px 6px', textAlign: 'right' } }, formatCost(project.cost, currency)),
           h('td', { style: { padding: '4px 6px', textAlign: 'right' } }, formatTokens(project.totalTokens)),
         ))
         for (const session of project.sessions) {
           rows.push(h('tr', { key: 's-' + session.id },
             h('td', { style: { padding: '3px 6px 3px 20px', color: '#8ea3b8', fontSize: '11px' } }, session.title),
+            h('td', { style: { padding: '3px 6px', color: '#8ea3b8', fontSize: '10.5px' } }, t('kind.' + (session.kind ?? 'undefined'))),
             h('td', { style: { padding: '3px 6px', textAlign: 'right', fontSize: '11px' } }, formatCost(session.cost, currency)),
             h('td', { style: { padding: '3px 6px', textAlign: 'right', fontSize: '11px' } }, formatTokens(session.totalTokens)),
           ))
@@ -969,10 +991,11 @@ window.__ModuleLoader__.load({
         'div',
         { style: { display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #1e3349', paddingTop: '10px' } },
         h('div', { style: { fontSize: '12px', fontWeight: 600 } }, t('panel.breakdown')),
-        h('div', { style: { display: 'flex', justifyContent: 'space-around', gap: '8px' } }, [donut(t('panel.byProject'), projects), donut(t('panel.bySession'), sessions)]),
+        h('div', { style: { display: 'flex', justifyContent: 'space-around', gap: '8px' } }, [donut(t('panel.byProject'), projects), donut(t('panel.byKind'), categories.map((category) => ({ ...category, name: t('kind.' + category.name) })))]),
         h('table', { style: { width: '100%', borderCollapse: 'collapse', fontSize: '12px' } },
           h('thead', null, h('tr', null,
             h('th', { style: { textAlign: 'left', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.project')),
+            h('th', { style: { textAlign: 'left', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.kind')),
             h('th', { style: { textAlign: 'right', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.cost')),
             h('th', { style: { textAlign: 'right', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.tokens')),
           )),

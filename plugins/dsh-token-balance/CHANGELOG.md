@@ -1,5 +1,14 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.6] - 2026-11-08
+
+### Changed
+- The second doughnut now groups sessions by **session kind** — Chat, Team member,
+  Sub-agent, or Undefined — instead of one slice per session; the table adds a Kind
+  column for each session row.
+- Both doughnuts show a small legend with names and percentages, so the project
+  name is visible even when there is a single workspace.
+
 ## [1.3.5] - 2026-11-08
 
 ### Changed

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { emptyUsage, pickAxisMax, projectOf, sessionBreakdown, sumUsage } from '../src/usage.js'
+import { emptyUsage, pickAxisMax, projectOf, sessionBreakdown, sessionKind, sumUsage } from '../src/usage.js'
 
 test('emptyUsage starts every counter at zero', () => {
   assert.deepEqual(emptyUsage(), {
@@ -73,4 +73,24 @@ test('sessionBreakdown groups records by project and by session', () => {
   assert.equal(breakdown.projects[0].cost, 1.5)
   assert.equal(breakdown.sessions.length, 2)
   assert.equal(breakdown.sessions[0].id, 's1')
+})
+
+
+test('sessionKind classifies chat, team, sub-agent and undefined sessions', () => {
+  assert.equal(sessionKind({ id: 's1', cwd: '/p/x' }, 'Reyin Refator'), 'chat')
+  assert.equal(sessionKind({ id: 's2', origin: 'subagent', parentSession: 's1' }), 'sub-agent')
+  assert.equal(sessionKind({ id: 's3', agentPreset: 'teammate' }), 'team')
+  assert.equal(sessionKind(undefined), 'undefined')
+})
+
+test('sessionBreakdown adds a category aggregation', () => {
+  const breakdown = sessionBreakdown([
+    { sessionId: 's1', totalTokens: 10, requests: 1 },
+    { sessionId: 's2', totalTokens: 20, requests: 1 },
+  ], new Map([
+    ['s1', { header: { id: 's1', cwd: '/p/x' } }],
+    ['s2', { header: { id: 's2', origin: 'subagent', parentSession: 's1' } }],
+  ]), () => 1)
+  assert.equal(breakdown.sessions[0].kind !== undefined, true)
+  assert.deepEqual(breakdown.categories.map((category) => category.name).sort(), ['chat', 'sub-agent'])
 })
