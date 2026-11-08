@@ -420,7 +420,7 @@ window.__ModuleLoader__.load({
         lineHeight: '18px',
         fontVariantNumeric: 'tabular-nums',
       },
-      balanceBanner: { display: 'flex', alignItems: 'baseline', gap: '8px', background: '#101d29', border: '1px solid #24445f', borderRadius: '10px', padding: '8px 12px' },
+      balanceBanner: { display: 'flex', alignItems: 'baseline', gap: '8px', background: '#101d29', border: '1px solid #24445f', borderRadius: '10px', padding: '8px 12px', margin: '10px 0' },
       balanceBig: { fontSize: '34px', fontWeight: 800, letterSpacing: '-0.4px', color: '#7fd1ff', fontVariantNumeric: 'tabular-nums' },
       balanceBannerLabel: { fontSize: '11px', color: '#8ea3b8' },
       topUp: { marginLeft: 'auto', fontSize: '11px', color: '#8ea3b8', textDecoration: 'none', borderBottom: '1px dotted #4a6b85', paddingBottom: '1px' },

@@ -62,8 +62,10 @@ releases and repository-level changes.
 
 ### Changed
 - `@fesmazz/dsh-token-balance` 1.3.1: dynamic 30-minute/1-hour/2-hour buckets by
-  range, and the dock bar now shows only the balance and this session's cost for
-  the selected window ([changelog](plugins/dsh-token-balance/CHANGELOG.md)).
+  range, the dock bar showing only the balance and this session's cost, plus the
+  balance-first Usage panel, a consumption breakdown by project/session kind,
+  responsive doughnuts, a collapsible Consumption section and a Start-page guide
+  card ([changelog](plugins/dsh-token-balance/CHANGELOG.md)).
 
 ## 2026-11-08 — repository 0.2.2
 

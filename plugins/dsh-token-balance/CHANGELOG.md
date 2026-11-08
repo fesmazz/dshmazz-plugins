@@ -1,83 +1,5 @@
 # Changelog — @fesmazz/dsh-token-balance
 
-## [1.3.10] - 2026-11-08
-
-### Changed
-- Removed the Cost/Tokens tabs: the Usage panel is cost-only, keeping the Y-axis
-  selector and the chart layout unchanged.
-- The time-range selector moved back above the stat values and is left-aligned;
-  the Cost / API requests / Tokens stat columns are centered.
-- The balance is larger (34px) with Top up on the same line, followed by a 24px
-  spacer before the stats.
-- The Consumption section is collapsible: the header toggles the doughnuts and
-  table, and collapsing gives the chart extra height.
-
-## [1.3.9] - 2026-11-08
-
-### Fixed
-- The doughnut pair now scales with the pane width instead of capping at 166px:
-  ring size, gap and side margins are derived from the measured panel width, so
-  widening the pane enlarges the rings and keeps the layout proportional. The band
-  stays at ~8% of the ring diameter, matching the approved concept.
-
-## [1.3.8] - 2026-11-08
-
-### Changed
-- Doughnuts now use the approved C2 geometry: larger rings with a 19px band
-  (scaled to the available width), 21px side margins and a 12px gutter. Labels
-  move below each ring; the hover overlay still covers every slice.
-
-## [1.3.7] - 2026-11-08
-
-### Changed
-- Removed the small legends under the doughnuts. Slices that are large enough now
-  carry their own label with a leader line; small slices show their name only in
-  the hover overlay.
-- The two doughnuts use separate colour palettes.
-
-## [1.3.6] - 2026-11-08
-
-### Changed
-- The second doughnut now groups sessions by **session kind** — Chat, Team member,
-  Sub-agent, or Undefined — instead of one slice per session; the table adds a Kind
-  column for each session row.
-- Both doughnuts show a small legend with names and percentages, so the project
-  name is visible even when there is a single workspace.
-
-## [1.3.5] - 2026-11-08
-
-### Changed
-- The time-range selector now shares one row with the Y-axis selector above the
-  chart, instead of sitting alone at the top of the panel.
-- The consumption breakdown groups by **workspace** again (the workspace name from
-  the session header), not by an inferred subfolder.
-
-## [1.3.4] - 2026-11-08
-
-### Added
-- A guide card in the right-sidebar Start page ("Usage & balance") that opens the
-  Usage tab, so the plugin is visible from a new session instead of only in the
-  settings area.
-
-## [1.3.3] - 2026-11-08
-
-### Changed
-- The remaining balance now leads the Usage panel: a banner under the header shows
-  the cyan balance, its label, and a discrete **Top up** link to the DeepSeek
-  platform. The old top-right balance chip is gone; the duplicated window-spend
-  line was dropped.
-
-## [1.3.2] - 2026-11-08
-
-### Added
-- Y-axis selector for the cost chart with fixed USD ranges ($0.50, $1, $1.50, $2,
-  $5, $10, $20, $50, $100); the chosen range applies to the chart and upgrades to
-  the next range when the data would not fit.
-- Consumption doughnut charts (by project and by session) below the chart, plus a
-  grouped table showing project and session cost and token totals.
-- The window response now carries a `breakdown` of projects and sessions with their
-  cost and token totals.
-
 ## [1.3.1] - 2026-11-08
 
 ### Changed
@@ -85,6 +7,15 @@
   hourly, 48h two-hourly; the panel chart title matches the bucket size.
 - The dock bar shows the balance and this session's cost for the selected range;
   token totals are no longer shown there.
+- The panel is cost-only (the Cost/Tokens tabs are gone); the time-range selector
+  sits above the centered stat values, the balance leads at 34px with an inline
+  Top up link, and the Consumption section collapses to give the chart more height.
+- Consumption breaks cost down by project and by session kind (Chat, Team member,
+  Sub-agent, Undefined) with responsive doughnuts, labels for large slices, hover
+  overlays, and a grouped table carrying a Kind column.
+- The Usage tab also appears as a Start-page guide card.
+- The cost chart has a Y-axis range selector ($0.50–$100) that auto-upgrades when
+  the data does not fit the chosen range.
 
 ## [1.3.0] - 2026-11-08
 
