@@ -1,4 +1,18 @@
-# Changelog — @mazz/dsh-delegation-models
+# Changelog — @fesmazz/dsh-delegation-models
+
+## [0.3.1] - 2026-11-08
+
+### Changed
+- Merged `main` (token-balance 1.2.0 and the `@fesmazz` scope rename) and renamed
+  every delegation reference to `@fesmazz/dsh-delegation-models`, including the
+  client module id and the sidebar tab type; no behaviour change. The 0.1.1 entry
+  below records the package rename that `main` shipped.
+
+## [0.1.1] - 2026-11-08
+
+### Changed
+- Renamed the package scope from `@mazz` to `@fesmazz` (the owner's handle;
+  `@mazz` belongs to someone else). No behaviour change.
 
 ## [0.3.0] - 2026-11-08
 

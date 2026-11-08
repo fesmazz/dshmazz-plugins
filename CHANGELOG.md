@@ -40,16 +40,32 @@ releases and repository-level changes.
 - V1.1 watched auto-configure: a file source with `autoApply` is polled, re-parsed
   and re-applied when it changes, with `appliedAt`/`lastError` and the source path
   in the state and UI; watcher covered by tests (46 total).
-- Released [`@mazz/dsh-delegation-models` 0.2.0](plugins/dsh-delegation-models/CHANGELOG.md)
+- Released [`@fesmazz/dsh-delegation-models` 0.2.0](plugins/dsh-delegation-models/CHANGELOG.md)
   — V1.1 complete plus V1.2 teammate-routing feature detection.
-- Released [`@mazz/dsh-delegation-models` 0.3.0](plugins/dsh-delegation-models/CHANGELOG.md)
+- Released [`@fesmazz/dsh-delegation-models` 0.3.0](plugins/dsh-delegation-models/CHANGELOG.md)
   — V1.2 teammate routing behind feature detection, rewritten usage documentation,
   and a verified harness patch README.
+- Released [`@fesmazz/dsh-delegation-models` 0.3.1](plugins/dsh-delegation-models/CHANGELOG.md)
+  — merged `main` (token-balance 1.2.0 and the `@fesmazz` rename) and renamed the
+  delegation package, client module id and references; no behaviour change.
+
+### Changed
+- Renamed the npm scope from `@mazz` to `@fesmazz` (the owner's handle;
+  `@mazz` belongs to someone else). `@fesmazz/dsh-token-balance` 1.2.0 and
+  `@fesmazz/dsh-delegation-models` 0.1.1 carry the rename; this branch released
+  the delegation rename as 0.3.1 after merging the change.
+
+## 2026-11-08 — repository 0.2.1
+
+### Changed
+- `@fesmazz/dsh-token-balance` 1.1.0: a 24-hour usage report from session history, a
+  right-Sidebar Cost/Tokens panel, a hover sparkline summary and an editable
+  list-price rate table ([changelog](plugins/dsh-token-balance/CHANGELOG.md)).
 
 ## 2026-11-07 — repository 0.2.0
 
 ### Added
-- `@mazz/dsh-delegation-models` 0.1.0: model-aware delegation tools, profile
+- `@fesmazz/dsh-delegation-models` 0.1.0: model-aware delegation tools, profile
   routing and a system-prompt policy section. See
   [its changelog](plugins/dsh-delegation-models/CHANGELOG.md).
 
@@ -61,5 +77,5 @@ releases and repository-level changes.
 ## 2026-11-07 — repository 0.1.0
 
 ### Added
-- Repository created, with `@mazz/dsh-token-balance` 1.0.0
+- Repository created, with `@fesmazz/dsh-token-balance` 1.0.0
   ([changelog](plugins/dsh-token-balance/CHANGELOG.md)).

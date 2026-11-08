@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Token & Balance",
-    "description": "Shows DeepSeek API token usage and the remaining account balance below the composer."
+    "description": "Shows DeepSeek balance, a hover usage summary and a 24-hour cost/token panel in the right sidebar."
   }
 }

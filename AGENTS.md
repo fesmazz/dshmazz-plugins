@@ -7,7 +7,7 @@ repository rules and wins where it is stricter.
 ## Scope
 
 A personal collection of DeepSeek Harness (`dsh`) plugins. Each plugin is one
-installable bundle under `plugins/<name>/`, named `@mazz/dsh-<topic>`.
+installable bundle under `plugins/<name>/`, named `@fesmazz/dsh-<topic>`.
 
 ## Layout and ownership
 

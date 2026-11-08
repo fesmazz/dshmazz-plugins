@@ -1,6 +1,6 @@
 # Delegation Models
 
-`@mazz/dsh-delegation-models` makes a requested delegation model stick. It routes
+`@fesmazz/dsh-delegation-models` makes a requested delegation model stick. It routes
 subagent work through model profiles (agent type × task type × tier × route ×
 effort), remembers a session's profile, and adds a Web UI to edit the policy, watch
 an auto-configure source, and inspect per-session usage.
@@ -60,7 +60,7 @@ The original YAML config still works (same row id):
 
 ```yaml
 - id: delegation-models
-  name: '@mazz/dsh-delegation-models'
+  name: '@fesmazz/dsh-delegation-models'
   config:
     provider: spawn
     defaultProfile: cheap

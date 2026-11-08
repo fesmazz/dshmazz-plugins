@@ -2,14 +2,14 @@
 
 A personal collection of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 plugins. One installable bundle per package under `plugins/`, each published in
-the `@mazz/` scope.
+the `@fesmazz/` scope.
 
 ## Plugins
 
 | Plugin | Package | What it does |
 |---|---|---|
-| Token & Balance | `@mazz/dsh-token-balance` | Shows DeepSeek token usage and the remaining account balance below the composer. |
-| Delegation Models | `@mazz/dsh-delegation-models` | Routes subagent delegations through named model profiles so a requested model is applied instead of inherited. [Configuration](docs/delegation-models.md). |
+| Token & Balance | `@fesmazz/dsh-token-balance` | Shows DeepSeek balance, a 24-hour hover usage summary and a right-Sidebar usage panel. [Details](docs/token-balance.md). |
+| Delegation Models | `@fesmazz/dsh-delegation-models` | Routes subagent delegations through named model profiles so a requested model is applied instead of inherited. [Configuration](docs/delegation-models.md). |
 
 ## Install
 
@@ -30,6 +30,8 @@ load its client module.
   `index.js`, optional `client.js`, `src/`, `test/`, `locale/`, `icon.svg`.
 - `docs/adding-a-plugin.md` — how to add the next plugin.
 - `docs/delegation-models.md` — profiles and routing for the delegation plugin.
+- `docs/token-balance.md` — the 24-hour usage model, rate table and limits of the
+  Token & Balance plugin.
 - `docs/mockups/` — UI proposals awaiting owner review (V1.1/V1.2).
 - `AGENTS.md` — rules for agents working in this repository.
 - `pnpm-workspace.yaml` — workspace listing (`plugins/*`).

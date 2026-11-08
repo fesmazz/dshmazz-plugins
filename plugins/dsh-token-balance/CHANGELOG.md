@@ -1,4 +1,55 @@
-# Changelog — @mazz/dsh-token-balance
+# Changelog — @fesmazz/dsh-token-balance
+
+## [1.2.0] - 2026-11-08
+
+### Changed
+- Renamed the package scope from `@mazz` to `@fesmazz` (the owner's handle;
+  `@mazz` belongs to someone else). No behaviour change: the client module id,
+  the sidebar tab type id and the in-package references use the new scope.
+
+## [1.1.0] - 2026-11-08
+
+### Added
+- Hover summary above the composer dock: estimated cost and token sparklines for
+  the last 24 hours, with a click-through to the full panel.
+- Right-Sidebar **Usage** tab (`ctx.sidebarRightTabs`), opened by clicking the dock
+  line: Cost and Tokens views with 24 clock-aligned hourly buckets stacked by model,
+  responsive SVG bars, and a per-bar breakdown on hover.
+- The route now returns a 24-hour `window` report: per bucket and per model token
+  counts, request counts and estimated cost, plus grand totals.
+- `rates.json` editable list-price table (peak and off-peak cache-hit, cache-miss
+  and output rates; peak windows and weekdays), with a plugin-config `rates` override.
+- `ctx.sessionQuery` reads for live and persisted sessions, with a live-session
+  fallback and a per-session cache keyed by log length.
+
+### Changed
+- The dock line summarises the rolling 24-hour window
+  (`Balance … · 24h … · … tokens`) instead of per-session input/output totals.
+- Cost is estimated from official DeepSeek list prices and the peak/off-peak UTC
+  windows are applied per event; the report labels it as an estimate.
+- The client half injects `@deepseek-ai/dsh-client-ui-sidebar-right` and the package
+  version is now 1.1.0.
+
+### Fixed
+- A live session whose log grows during a report read is re-read on the next poll
+  instead of caching a snapshot with a missing tail.
+- The route keeps returning the balance when the usage report fails, and the panel
+  shows a retry action instead of a blank column.
+- The sidebar services are declared in the client plugin's inject list, so a
+  dynamically loaded plugin can open the Usage tab as well as the static boot path.
+- Guards for a missing ResizeObserver, locale-aware integer grouping, derived chart
+  tick positions, React keys in the panel, and a preview width clamped to the
+  viewport.
+- The committed harness screenshots use placeholder copy instead of chat text.
+
+### Known limits
+- Persisted sessions are pre-filtered by `header.createdAt` inside the 24-hour
+  window; a session created before the window and archived without being live while
+  the plugin ran is not read.
+- Chinese public holidays are not modelled for peak pricing, so peak-hour estimates
+  on those days can be high.
+- The component harness verifies layout and interaction; the live slot rendering
+  needs a page refresh in the running profile.
 
 ## [1.0.0] - 2026-11-07
 
@@ -11,7 +62,7 @@
 
 ### Changed
 - Moved from the `@local/` placeholder package into `dshmazz-plugins` as
-  `@mazz/dsh-token-balance`.
+  `@fesmazz/dsh-token-balance`.
 
 ### Known limits
 - Token usage covers live sessions only; archived history needs `ctx.sessionQuery`.
