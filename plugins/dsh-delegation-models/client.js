@@ -63,6 +63,11 @@ window.__ModuleLoader__.load({
       'usage.empty': 'No usage recorded yet.',
       'usage.loading': 'Loading usage…',
       'usage.note': 'From Token & Balance and live session events.',
+      'teammates.patched': 'Teammate routing: the patched spawn_teammate accepts provider/model/effort.',
+      'teammates.unpatched': 'Teammate routing: stock spawn_teammate on this build; teammate rows guide delegate_model only.',
+      'teammates.native': 'Teammate routing: teammates are subagents with native model selection.',
+      'teammates.native-unselected': 'Teammate routing: subagents exist but model selection is off.',
+      'teammates.unsupported': 'Teammate routing: no teammate or subagent tool is visible.',
       'common.loading': 'Loading…',
       'common.error': 'Could not read the delegation state.',
       'common.retry': 'Retry',
@@ -123,6 +128,11 @@ window.__ModuleLoader__.load({
       'usage.empty': '暂无用量记录。',
       'usage.loading': '加载用量…',
       'usage.note': '来自 Token & Balance 与实时会话事件。',
+      'teammates.patched': '队友路由：补丁版 spawn_teammate 接受 provider/model/effort。',
+      'teammates.unpatched': '队友路由：当前构建为原版 spawn_teammate；队友行仅作用于 delegate_model。',
+      'teammates.native': '队友路由：队友是具备原生模型选择的子代理。',
+      'teammates.native-unselected': '队友路由：子代理可用，但模型选择未启用。',
+      'teammates.unsupported': '队友路由：当前构建没有可见的队友或子代理工具。',
       'common.loading': '加载中…',
       'common.error': '无法读取委派状态。',
       'common.retry': '重试',
@@ -422,6 +432,7 @@ window.__ModuleLoader__.load({
           h('button', { style: { ...S.button, ...S.primary }, onClick: save }, t('profiles.save')),
         ),
         h('div', { style: S.note }, 'Rows address Agent type × Task type. The default row is used when a delegation names neither.'),
+        data.teammates === undefined ? null : h('div', { style: S.note }, t(`teammates.${data.teammates.mode}`)),
       )
     }
 
@@ -778,6 +789,7 @@ window.__ModuleLoader__.load({
           )
         }),
         h('div', { style: S.note }, t('panel.note')),
+        data.teammates === undefined ? null : h('div', { style: S.note }, t(`teammates.${data.teammates.mode}`)),
         h(UsageSection, { sessionId, t }),
         error === null ? null : h('div', { style: S.error }, error),
         message === null ? null : h('div', { style: S.ok }, message),

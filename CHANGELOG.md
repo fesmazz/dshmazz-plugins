@@ -40,6 +40,8 @@ releases and repository-level changes.
 - V1.1 watched auto-configure: a file source with `autoApply` is polled, re-parsed
   and re-applied when it changes, with `appliedAt`/`lastError` and the source path
   in the state and UI; watcher covered by tests (46 total).
+- Released [`@mazz/dsh-delegation-models` 0.2.0](plugins/dsh-delegation-models/CHANGELOG.md)
+  — V1.1 complete plus V1.2 teammate-routing feature detection.
 
 ## 2026-11-07 — repository 0.2.0
 

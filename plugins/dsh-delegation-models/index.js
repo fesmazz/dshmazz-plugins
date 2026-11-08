@@ -18,6 +18,7 @@
  */
 
 import { CATALOG } from './src/catalog.js'
+import { detectTeammateRouting } from './src/capabilities.js'
 import { assertAllowed, buildCatalog, normalizeConfig, resolveRoute } from './src/policy.js'
 import { mergeProfileRow, normalizeProfiles, profileKey, profilesToPolicy } from './src/profiles.js'
 import { buildParseMessage, extractJson, normalizeParsed, PARSE_SYSTEM } from './src/parse.js'
@@ -136,6 +137,24 @@ function profileLines(catalog, overrides) {
   return lines.join('\n')
 }
 
+/** Detect how this build can route teammate models. */
+function teammateCapability(ctx, agent) {
+  let schemas = []
+  try {
+    const scope = agent ?? ctx.agents.roots()[0]
+    if (scope !== undefined) schemas = ctx.tools.schemas(scope)
+  } catch {
+    schemas = []
+  }
+  let modelSelection = false
+  try {
+    modelSelection = ctx.get('subagentModelSelection')?.current?.()?.enabled === true
+  } catch {
+    modelSelection = false
+  }
+  return detectTeammateRouting({ schemas, modelSelection })
+}
+
 /** The policy block rendered only for scopes that can see `delegate_model`. */
 function promptText(ctx, config, delegateTool, context) {
   const scope = context === null || context === undefined ? undefined : context.scope
@@ -145,6 +164,7 @@ function promptText(ctx, config, delegateTool, context) {
   const agent = context === null || context === undefined ? undefined : context.agent
   const overrides = agent === undefined ? undefined : overridesOf(agent.session)
   const current = overrides?.profile ?? catalog.defaultProfile
+  const capability = teammateCapability(ctx, agent)
   return [
     'Delegation model policy:',
     profileLines(catalog, overrides),
@@ -152,7 +172,11 @@ function promptText(ctx, config, delegateTool, context) {
     'When the user names a model, profile, agent type or task type for a delegation, honor it: pass provider+model (and reasoning_effort when named) to `subagent`, or call `delegate_model` with the profile name or agent_type/task_type.',
     'When no model is named, call `delegate_model` with the default profile instead of letting the delegation inherit the Lead\'s route.',
     `When the user asks to use one model for all delegations in this session, call \`${PROFILE_TOOL}\` with that profile and use it for later delegations.`,
-    'Teammates started with `spawn_teammate` inherit the Lead model and take no model argument; when a delegation must use another model, use `delegate_model` instead of a teammate.',
+    capability.mode === 'patched'
+      ? 'For a teammate delegation, pass provider, model and reasoning_effort from the matching teammate profile row to `spawn_teammate`.'
+      : teammateCapability(ctx, agent).mode.startsWith('native')
+        ? 'Teammates are continuable subagents with native model selection; pass the matching teammate row route through the subagent path.'
+        : 'Teammate route overrides do not apply on this harness build (stock `spawn_teammate`); use `delegate_model` for model-specific work.',
     'Changing the route without naming an effort uses the selected model default.',
   ].join('\n')
 }
@@ -574,6 +598,7 @@ export function apply(ctx, rawConfig) {
           },
           availableModels: availableModels(state),
           bundledRates: BUNDLED_RATES,
+          teammates: teammateCapability(ctx),
           overrides: sessionId === undefined ? null : sessionOverrides.get(sessionId) ?? null,
           policy: profilesToPolicy(state.profiles),
         })
