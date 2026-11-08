@@ -10,6 +10,7 @@ the `@fesmazz/` scope.
 |---|---|---|
 | Token & Balance | `@fesmazz/dsh-token-balance` | Shows DeepSeek balance, a 6/12/24/48-hour session-vs-all hover comparison and a right-Sidebar usage panel. [Details](docs/token-balance.md). |
 | Delegation Models | `@fesmazz/dsh-delegation-models` | Routes subagent delegations through named model profiles so a requested model is applied instead of inherited. [Configuration](docs/delegation-models.md). |
+| Project Sections | `@fesmazz/dsh-project-sections` | Groups sessions into named projects independent of workspace folders; create/rename/delete projects and move chats between them. [Details](docs/project-sections.md). |
 
 ## Install
 
@@ -30,6 +31,7 @@ load its client module.
   `index.js`, optional `client.js`, `src/`, `test/`, `locale/`, `icon.svg`.
 - `docs/adding-a-plugin.md` — how to add the next plugin.
 - `docs/delegation-models.md` — profiles and routing for the delegation plugin.
+- `docs/project-sections.md` — the project-grouping model and this plugin's limits.
 - `docs/token-balance.md` — the 24-hour usage model, rate table and limits of the
   Token & Balance plugin.
 - `docs/mockups/` — UI proposals awaiting owner review (V1.1/V1.2).

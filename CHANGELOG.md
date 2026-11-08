@@ -7,6 +7,14 @@ releases and repository-level changes.
 ## Unreleased
 
 ### Added
+- `@fesmazz/dsh-project-sections` 0.1.0: group sessions into named projects
+  (sections) independent of workspace folders, create/rename/delete projects,
+  assign a session to a project, and move a chat between projects. Includes a
+  Settings → Projects page, a session-row project badge, a same-origin JSON API
+  under `/dsh-project-sections`, and an agent `project` tool. Spend/cost tracking
+  is intentionally left to the Token & Balance plugin. Covered by 17
+  `node --test` cases.
+
 - UI proposal for V1.1 and V1.2, with rendered mockups in
   [`docs/mockups/v1.1/`](docs/mockups/v1.1/README.md): profiles settings, file
   auto-configuration, and session model/cost tracking.

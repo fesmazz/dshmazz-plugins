@@ -1,0 +1,3 @@
+- insert:
+    - id: project-sections
+      name: '@fesmazz/dsh-project-sections'
