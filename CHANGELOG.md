@@ -19,6 +19,9 @@ releases and repository-level changes.
   teammate route fields and `agentOptions` passthrough (V1.2 groundwork).
 - V1.1/V1.2 implementation plan in
   [`docs/plans/delegation-v1.1.md`](docs/plans/delegation-v1.1.md).
+- V1.1 host foundation: bundled category catalog, bundled rate card with
+  validation and cost estimation, token-usage folding, and an atomic JSON state
+  store for profiles/rates/source; covered by 15 `node --test` cases.
 
 ## 2026-11-07 — repository 0.2.0
 
