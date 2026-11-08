@@ -352,6 +352,23 @@ function normalizeSource(value) {
   }
 }
 
+/** Unique exact routes the client may offer for overrides. */
+function availableModels(state) {
+  const seen = new Set()
+  const list = []
+  const add = (provider, model) => {
+    if (!isText(provider) || !isText(model)) return
+    const key = `${provider}\u0000${model}`
+    if (seen.has(key)) return
+    seen.add(key)
+    list.push({ provider, model })
+  }
+  for (const rate of state.rates?.models ?? []) add(rate.provider, rate.model)
+  for (const row of Object.values(state.profiles ?? {})) add(row.provider, row.model)
+  for (const route of state.allowedModels ?? []) add(route.provider, route.model)
+  return list
+}
+
 export function apply(ctx, rawConfig) {
   const store = createStateStore(defaultStateDirectory())
   let state = store.read()
@@ -372,8 +389,11 @@ export function apply(ctx, rawConfig) {
 
   const routes = [
     {
+      method: 'GET',
       path: `${ROUTE_PREFIX}/state`,
       handler: async (req, res) => {
+        const url = new URL(req.url ?? '/', 'http://local')
+        const sessionId = url.searchParams.get('sessionId') ?? undefined
         writeJson(res, 200, {
           ok: true,
           catalog: CATALOG,
@@ -384,11 +404,15 @@ export function apply(ctx, rawConfig) {
             rates: state.rates,
             source: state.source,
           },
+          availableModels: availableModels(state),
+          bundledRates: BUNDLED_RATES,
+          overrides: sessionId === undefined ? null : sessionOverrides.get(sessionId) ?? null,
           policy: profilesToPolicy(state.profiles),
         })
       },
     },
     {
+      method: 'POST',
       path: `${ROUTE_PREFIX}/profiles`,
       handler: async (req, res) => {
         const body = await readJson(req)
@@ -411,6 +435,7 @@ export function apply(ctx, rawConfig) {
       },
     },
     {
+      method: 'POST',
       path: `${ROUTE_PREFIX}/rates`,
       handler: async (req, res) => {
         const body = await readJson(req)
@@ -424,6 +449,7 @@ export function apply(ctx, rawConfig) {
       },
     },
     {
+      method: 'POST',
       path: `${ROUTE_PREFIX}/source`,
       handler: async (req, res) => {
         const body = await readJson(req)
@@ -437,6 +463,7 @@ export function apply(ctx, rawConfig) {
       },
     },
     {
+      method: 'POST',
       path: `${ROUTE_PREFIX}/overrides`,
       handler: async (req, res) => {
         const body = await readJson(req)
@@ -457,7 +484,21 @@ export function apply(ctx, rawConfig) {
 
   for (const route of routes) {
     ctx.effect(
-      () => ctx.webServer.register({ kind: 'exact', path: route.path, handler: route.handler }),
+      () => ctx.webServer.register({
+        kind: 'exact',
+        path: route.path,
+        handler: async (req, res) => {
+          if (req.method !== route.method) {
+            writeJson(res, 405, { ok: false, errors: [`method ${String(req.method)} is not allowed`] })
+            return
+          }
+          try {
+            await route.handler(req, res)
+          } catch (error) {
+            writeJson(res, 500, { ok: false, errors: [error instanceof Error ? error.message : String(error)] })
+          }
+        },
+      }),
       `delegation-models: route ${route.path}`,
     )
   }

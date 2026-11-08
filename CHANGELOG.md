@@ -25,6 +25,10 @@ releases and repository-level changes.
 - V1.1 profile rows and host routes: agent-type × task-type rows with validation,
   per-session row overrides, `state`/`profiles`/`rates`/`source`/`overrides`
   routes, dynamic tool routing through rows, and profile unit tests (34 total).
+- V1.1 client half: Plugins → Delegation Models page (Profiles, Rates,
+  Auto-configure source) and a right-sidebar session override panel; manifest
+  client entry; state extras (`availableModels`, `bundledRates`, session
+  overrides) and a route method guard.
 
 ## 2026-11-07 — repository 0.2.0
 
