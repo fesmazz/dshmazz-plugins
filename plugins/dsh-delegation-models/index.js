@@ -21,13 +21,15 @@ import { CATALOG } from './src/catalog.js'
 import { assertAllowed, buildCatalog, normalizeConfig, resolveRoute } from './src/policy.js'
 import { mergeProfileRow, normalizeProfiles, profileKey, profilesToPolicy } from './src/profiles.js'
 import { BUNDLED_RATES, validateRateCard } from './src/rates.js'
+import { summarizeAgents } from './src/report.js'
 import { createStateStore, defaultStateDirectory } from './src/state.js'
+import { sumUsage } from './src/usage.js'
 
 /** Cordis plugin name. */
 export const name = 'delegation-models'
 
 /** Tool, delegation, prompt and HTTP carrier services. */
-export const inject = ['tools', 'subagents', 'systemPrompt', 'webServer']
+export const inject = ['agents', 'tools', 'subagents', 'systemPrompt', 'webServer']
 
 const DELEGATE_TOOL = 'delegate_model'
 const PROFILE_TOOL = 'set_delegation_profile'
@@ -369,6 +371,86 @@ function availableModels(state) {
   return list
 }
 
+/** Committed events of one live Session, or an empty list when unreadable. */
+function eventsOf(session) {
+  try {
+    return typeof session?.snapshotEvents === 'function' ? session.snapshotEvents() : []
+  } catch {
+    return []
+  }
+}
+
+/** The route an agent currently runs on. */
+function routeOf(agent) {
+  const options = agent?.options
+  if (options !== undefined && isText(options.provider) && isText(options.model)) {
+    return { provider: options.provider, model: options.model }
+  }
+  try {
+    const request = agent?.session?.requestContext?.()
+    if (request !== undefined && isText(request.provider) && isText(request.model)) {
+      return { provider: request.provider, model: request.model }
+    }
+  } catch {
+    // Fall through to an unknown route.
+  }
+  return {}
+}
+
+/** Role and display name for one live agent. */
+function identityOf(ctx, agent, root) {
+  if (String(agent.id) === String(root.id)) return { role: 'lead', name: 'lead' }
+  try {
+    const membership = ctx.get('agentTeams')?.membership?.(agent)
+    if (membership !== undefined) return { role: membership.role, name: membership.name ?? String(agent.id) }
+  } catch {
+    // Not a Team member.
+  }
+  const title = agent?.session?.header?.title
+  return { role: 'subagent', name: isText(title) ? title : String(agent.id) }
+}
+
+/** Live agents under one root, including the root. */
+function agentsUnder(ctx, root) {
+  const rootId = String(root.id)
+  const list = []
+  for (const agent of ctx.agents.list()) {
+    let current = agent
+    let depth = 0
+    let under = false
+    while (current !== undefined && depth < 12) {
+      if (String(current.id) === rootId) { under = true; break }
+      const parentId = current.session?.header?.parentSession
+      if (parentId === undefined) break
+      current = ctx.agents.get(parentId)
+      depth += 1
+    }
+    if (under) list.push(agent)
+  }
+  return list
+}
+
+/** Balance from the Token & Balance plugin route, cached briefly. */
+let balanceCache = { at: 0, value: null }
+async function tokenBalance(ctx, sessionId) {
+  const now = Date.now()
+  if (balanceCache.at !== 0 && now - balanceCache.at < 30_000) return balanceCache.value
+  try {
+    const origin = ctx.webServer.getOrigin()
+    const query = sessionId === undefined ? '' : `?sessionId=${encodeURIComponent(sessionId)}`
+    const response = await fetch(`${origin}/dsh-token-balance${query}`, {
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(4_000),
+    })
+    if (!response.ok) return null
+    const value = await response.json()
+    balanceCache = { at: now, value }
+    return value
+  } catch {
+    return null
+  }
+}
+
 export function apply(ctx, rawConfig) {
   const store = createStateStore(defaultStateDirectory())
   let state = store.read()
@@ -460,6 +542,40 @@ export function apply(ctx, rawConfig) {
         }
         state = store.write({ source })
         writeJson(res, 200, { ok: true, source: state.source })
+      },
+    },
+    {
+      method: 'GET',
+      path: `${ROUTE_PREFIX}/usage`,
+      handler: async (req, res) => {
+        const url = new URL(req.url ?? '/', 'http://local')
+        const requested = url.searchParams.get('sessionId') ?? undefined
+        const root = requested === undefined ? ctx.agents.roots()[0] : ctx.agents.get(requested)
+        if (root === undefined) {
+          writeJson(res, 404, { ok: false, errors: ['no live Session for the requested id'] })
+          return
+        }
+        const agents = agentsUnder(ctx, root).map((agent) => {
+          const identity = identityOf(ctx, agent, root)
+          const route = routeOf(agent)
+          return {
+            id: String(agent.id),
+            name: identity.name,
+            role: identity.role,
+            provider: route.provider,
+            model: route.model,
+            usage: sumUsage(eventsOf(agent.session)),
+          }
+        })
+        const report = summarizeAgents(agents, state.rates)
+        const token = await tokenBalance(ctx, String(root.id))
+        writeJson(res, 200, {
+          ok: true,
+          sessionId: String(root.id),
+          currency: state.rates.currency,
+          balance: token?.balance ?? null,
+          ...report,
+        })
       },
     },
     {

@@ -50,6 +50,15 @@ window.__ModuleLoader__.load({
       'panel.reset': 'Reset to global',
       'panel.empty': 'No global profiles yet. Add them under Plugins → Delegation Models.',
       'panel.note': 'Teammates inherit the Lead model until V1.2; overrides apply to delegate_model and subagents.',
+      'usage.title': 'Session usage',
+      'usage.balance': 'Balance',
+      'usage.cost': 'Cost (est.)',
+      'usage.tokens': 'Tokens',
+      'usage.team': 'Team',
+      'usage.subagents': 'Subagents',
+      'usage.empty': 'No usage recorded yet.',
+      'usage.loading': 'Loading usage…',
+      'usage.note': 'From Token & Balance and live session events.',
       'common.loading': 'Loading…',
       'common.error': 'Could not read the delegation state.',
       'common.retry': 'Retry',
@@ -97,6 +106,15 @@ window.__ModuleLoader__.load({
       'panel.reset': '恢复全局',
       'panel.empty': '暂无全局档案。请在 插件 → 委派模型 中添加。',
       'panel.note': 'V1.2 之前队友继承 Lead 模型；覆盖作用于 delegate_model 与子代理。',
+      'usage.title': '会话用量',
+      'usage.balance': '余额',
+      'usage.cost': '成本（估算）',
+      'usage.tokens': 'Token',
+      'usage.team': '团队',
+      'usage.subagents': '子代理',
+      'usage.empty': '暂无用量记录。',
+      'usage.loading': '加载用量…',
+      'usage.note': '来自 Token & Balance 与实时会话事件。',
       'common.loading': '加载中…',
       'common.error': '无法读取委派状态。',
       'common.retry': '重试',
@@ -172,6 +190,87 @@ window.__ModuleLoader__.load({
         style: { ...S.input, ...props.style },
         'aria-label': props.label,
       }, (props.options ?? []).map((option) => h('option', { key: option.value, value: option.value }, option.label)))
+    }
+
+    function trimTokens(value) {
+      if (!Number.isFinite(value) || value <= 0) return '0'
+      if (value >= 1e9) return `${(value / 1e9).toFixed(1).replace(/\.0$/, '')}B`
+      if (value >= 1e6) return `${(value / 1e6).toFixed(1).replace(/\.0$/, '')}M`
+      if (value >= 1e3) return `${(value / 1e3).toFixed(1).replace(/\.0$/, '')}k`
+      return String(Math.round(value))
+    }
+
+    function symbolOf(currency) {
+      if (currency === 'CNY') return '¥'
+      if (currency === 'USD') return '$'
+      return ''
+    }
+
+    function money(value, currency) {
+      if (value === null || value === undefined) return '—'
+      return `${symbolOf(currency)}${Number(value).toFixed(2)}`
+    }
+
+    function useUsage(sessionId) {
+      const [state, setState] = React.useState({ status: 'loading', data: null, error: null })
+      const load = React.useCallback(async () => {
+        if (sessionId === undefined || sessionId === null) return
+        try {
+          const data = await request(`/usage?sessionId=${encodeURIComponent(String(sessionId))}`)
+          setState({ status: 'ready', data, error: null })
+        } catch (error) {
+          setState({ status: 'error', data: null, error: error instanceof Error ? error.message : String(error) })
+        }
+      }, [sessionId])
+      React.useEffect(() => {
+        let alive = true
+        const run = async () => { if (alive) await load() }
+        run()
+        const timer = setInterval(run, 20_000)
+        return () => { alive = false; clearInterval(timer) }
+      }, [load])
+      return state
+    }
+
+    function UsageSection(props) {
+      const t = props.t
+      const state = useUsage(props.sessionId)
+      if (state.status === 'loading') return h('div', { style: S.note }, t('usage.loading'))
+      if (state.status === 'error') return h('div', { style: S.error }, state.error ?? '')
+      const data = state.data
+      if (data === null) return null
+      const currency = data.currency ?? data.balance?.currency ?? null
+      const team = data.team ?? []
+      const subagents = data.subagents ?? []
+      const table = (rows) => rows.length === 0
+        ? h('div', { style: S.note }, t('usage.empty'))
+        : h('table', { style: S.table },
+            h('thead', null, h('tr', null,
+              h('th', { style: S.th }, 'Agent'),
+              h('th', { style: S.th }, 'Model'),
+              h('th', { style: S.th }, t('usage.tokens')),
+              h('th', { style: S.th }, t('usage.cost')),
+            )),
+            h('tbody', null, rows.map((row) => h('tr', { key: row.id },
+              h('td', { style: S.td }, row.name),
+              h('td', { style: S.td }, row.model === null ? '—' : `${row.provider}/${row.model}`),
+              h('td', { style: S.td }, trimTokens(row.usage?.totalTokens ?? 0)),
+              h('td', { style: S.td }, money(row.cost, currency)),
+            ))),
+          )
+      return h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } },
+        h('div', { style: { fontWeight: 600, fontSize: '12.5px' } }, t('usage.title')),
+        h('div', { style: S.note },
+          `${t('usage.balance')} ${data.balance === null ? '—' : money(data.balance.total, currency)}`,
+          ` · ${t('usage.cost')} ${money(data.totals?.cost, currency)}`,
+          ` · ${t('usage.tokens')} ${trimTokens(data.totals?.usage?.totalTokens ?? 0)}`,
+        ),
+        h('div', { style: S.small }, t('usage.team')),
+        table(team),
+        h('div', { style: S.small }, t('usage.subagents')),
+        table(subagents),
+        h('div', { style: S.note }, t('usage.note')),
+      )
     }
 
     function Field(props) {
@@ -609,6 +708,7 @@ window.__ModuleLoader__.load({
           )
         }),
         h('div', { style: S.note }, t('panel.note')),
+        h(UsageSection, { sessionId, t }),
         error === null ? null : h('div', { style: S.error }, error),
         message === null ? null : h('div', { style: S.ok }, message),
         h('div', { style: S.rowFlex },

@@ -29,6 +29,10 @@ releases and repository-level changes.
   Auto-configure source) and a right-sidebar session override panel; manifest
   client entry; state extras (`availableModels`, `bundledRates`, session
   overrides) and a route method guard.
+- V1.1 session usage: `GET /usage` aggregates live Team and Subagent rows with
+  token totals and cost from the active rate card plus the Token & Balance
+  balance; the sidebar panel renders the summary and separate Team/Subagent
+  tables.
 
 ## 2026-11-07 — repository 0.2.0
 
