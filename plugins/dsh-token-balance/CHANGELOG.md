@@ -1,5 +1,12 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.4] - 2026-11-08
+
+### Added
+- A guide card in the right-sidebar Start page ("Usage & balance") that opens the
+  Usage tab, so the plugin is visible from a new session instead of only in the
+  settings area.
+
 ## [1.3.3] - 2026-11-08
 
 ### Changed
