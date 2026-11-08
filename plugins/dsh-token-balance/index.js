@@ -186,6 +186,7 @@ export function apply(ctx, config = {}) {
         if (cached.complete === false && seq !== undefined && cached.seq === seq) return cached.usage
       }
     }
+    const seqBefore = liveSeqOf(liveSession(ctx, candidate.id) ?? candidate.session)
     let events
     if (query !== undefined && typeof query.readSession === 'function') {
       const result = await query.readSession(candidate.id)
@@ -195,8 +196,11 @@ export function apply(ctx, config = {}) {
       events = typeof session?.snapshotEvents === 'function' ? session.snapshotEvents() : []
     }
     const usage = usageRecords(events, { from: windowStart })
-    const seq = liveSeqOf(liveSession(ctx, candidate.id) ?? candidate.session)
-    cache.sessions.set(candidate.id, { seq, complete: !candidate.live, usage })
+    const seqAfter = liveSeqOf(liveSession(ctx, candidate.id) ?? candidate.session)
+    // Cache the log length only when it did not move during the read; otherwise
+    // the next poll re-reads rather than trusting a snapshot with a missing tail.
+    const stableSeq = seqBefore !== undefined && seqBefore === seqAfter ? seqAfter : undefined
+    cache.sessions.set(candidate.id, { seq: stableSeq, complete: !candidate.live, usage })
     return usage
   }
 
@@ -307,12 +311,25 @@ export function apply(ctx, config = {}) {
         kind: 'exact',
         path: '/dsh-token-balance',
         handler: async (req, res) => {
-          try {
-            const [balance, report] = await Promise.all([readBalance(), readReport()])
-            writeJson(res, 200, { balance: balance ?? null, ...report })
-          } catch (error) {
-            writeJson(res, 500, { error: error instanceof Error ? error.message : String(error) })
+          const [balanceResult, reportResult] = await Promise.allSettled([readBalance(), readReport()])
+          const errorOf = (result) => (result.reason instanceof Error ? result.reason.message : String(result.reason))
+          if (balanceResult.status === 'rejected' && reportResult.status === 'rejected') {
+            writeJson(res, 500, { error: errorOf(reportResult) })
+            return
           }
+          const body = {
+            balance: balanceResult.status === 'fulfilled' ? balanceResult.value ?? null : null,
+            updatedAt: Date.now(),
+          }
+          if (reportResult.status === 'fulfilled') {
+            Object.assign(body, reportResult.value)
+          } else {
+            body.window = null
+            body.rates = null
+            body.meta = { sessionSource: 'unavailable', sessions: 0 }
+            body.error = errorOf(reportResult)
+          }
+          writeJson(res, 200, body)
         },
       }),
     'token-balance: route',

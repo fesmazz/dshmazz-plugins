@@ -19,7 +19,8 @@
     "rates.json",
     "cordis.patch.yml",
     "locale/*.json",
-    "icon.svg"
+    "icon.svg",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "test": "node --test"

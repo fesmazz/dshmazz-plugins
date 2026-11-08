@@ -1,6 +1,6 @@
 # Changelog — @mazz/dsh-token-balance
 
-## [1.1.0] - 2026-11-07
+## [1.1.0] - 2026-11-08
 
 ### Added
 - Hover summary above the composer dock: estimated cost and token sparklines for
@@ -23,13 +23,26 @@
 - The client half injects `@deepseek-ai/dsh-client-ui-sidebar-right` and the package
   version is now 1.1.0.
 
+### Fixed
+- A live session whose log grows during a report read is re-read on the next poll
+  instead of caching a snapshot with a missing tail.
+- The route keeps returning the balance when the usage report fails, and the panel
+  shows a retry action instead of a blank column.
+- The sidebar services are declared in the client plugin's inject list, so a
+  dynamically loaded plugin can open the Usage tab as well as the static boot path.
+- Guards for a missing ResizeObserver, locale-aware integer grouping, derived chart
+  tick positions, React keys in the panel, and a preview width clamped to the
+  viewport.
+- The committed harness screenshots use placeholder copy instead of chat text.
+
 ### Known limits
-- Sessions are scanned when they are live or were created inside the 24-hour window;
-  a session archived before the window is not read.
+- Persisted sessions are pre-filtered by `header.createdAt` inside the 24-hour
+  window; a session created before the window and archived without being live while
+  the plugin ran is not read.
 - Chinese public holidays are not modelled for peak pricing, so peak-hour estimates
   on those days can be high.
-- Sparkline and panel rendering are verified in the mockup harness; the live slot
-  rendering needs a page refresh in the running profile.
+- The component harness verifies layout and interaction; the live slot rendering
+  needs a page refresh in the running profile.
 
 ## [1.0.0] - 2026-11-07
 

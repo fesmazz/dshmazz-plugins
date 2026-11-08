@@ -16,7 +16,7 @@ window.__ModuleLoader__.load({
       'dock.tokens': 'tokens',
       'dock.loading': '…',
       'dock.unavailable': 'Usage unavailable',
-      'dock.noKey': 'No DeepSeek API key',
+      'dock.noKey': 'Sign in or set an API key',
       'dock.balanceError': 'Balance unavailable',
       'dock.balanceUnavailable': '—',
       'dock.noUsage': 'No usage in 24h',
@@ -61,7 +61,7 @@ window.__ModuleLoader__.load({
       'dock.tokens': 'Token',
       'dock.loading': '…',
       'dock.unavailable': '用量不可用',
-      'dock.noKey': '未配置 DeepSeek API Key',
+      'dock.noKey': '请登录或配置 API Key',
       'dock.balanceError': '余额不可用',
       'dock.balanceUnavailable': '—',
       'dock.noUsage': '24 小时内无用量',
@@ -164,7 +164,7 @@ window.__ModuleLoader__.load({
     }
     function formatInt(value) {
       const n = Number(value)
-      return Number.isFinite(n) ? Math.round(n).toLocaleString('en-US') : '—'
+      return Number.isFinite(n) ? Math.round(n).toLocaleString() : '—'
     }
     function clockOf(ms) {
       const date = new Date(ms)
@@ -299,7 +299,7 @@ window.__ModuleLoader__.load({
       preview: {
         position: 'fixed',
         transform: 'translateX(-50%)',
-        width: '300px',
+        width: 'min(300px, calc(100vw - 16px))',
         boxSizing: 'border-box',
         padding: '12px',
         borderRadius: C.radiusLg,
@@ -418,7 +418,7 @@ window.__ModuleLoader__.load({
 
     function HoverPreview({ t, state, onOpen, onClose, anchor }) {
       const data = state.data
-      const win = data === null ? undefined : data.window
+      const win = data === null || data.window == null ? undefined : data.window
       const buckets = win === undefined ? [] : win.buckets
       const models = win === undefined ? [] : win.models
       const maxCost = buckets.reduce((max, bucket) => Math.max(max, bucketValue(bucket, models, 'cost')), 0)
@@ -450,7 +450,9 @@ window.__ModuleLoader__.load({
         ),
         data === null
           ? h('div', { style: S.previewEmpty }, state.status === 'error' ? t('dock.unavailable') : t('dock.loading'))
-          : empty
+          : win === undefined
+            ? h('div', { style: S.previewEmpty }, t('dock.unavailable'))
+            : empty
             ? h('div', { style: S.previewEmpty }, t('preview.empty'))
             : h(
                 React.Fragment,
@@ -486,9 +488,11 @@ window.__ModuleLoader__.load({
       const balance = balanceTextOf(data.balance, t)
       if (balance !== undefined && balance !== '') parts.push(t('dock.balance') + ' ' + balance)
       const win = data.window
-      if (win !== undefined && win.totals.requests > 0) {
+      if (win != null && win.totals.requests > 0) {
         parts.push(t('dock.window') + ' ' + formatCost(win.totals.cost, data.rates.currency))
         parts.push(formatTokens(win.totals.totalTokens) + ' ' + t('dock.tokens'))
+      } else if (win == null) {
+        parts.push(t('dock.unavailable'))
       } else {
         parts.push(t('dock.noUsage'))
       }
@@ -511,7 +515,7 @@ window.__ModuleLoader__.load({
         const button = buttonRef.current
         if (button === null) return
         const rect = button.getBoundingClientRect()
-        const half = 154
+        const half = Math.min(154, Math.max(0, window.innerWidth / 2 - 8))
         const center = Math.max(half, Math.min(window.innerWidth - half, rect.left + rect.width / 2))
         setAnchor({ left: center, bottom: window.innerHeight - rect.top + 8 })
       }
@@ -688,7 +692,10 @@ window.__ModuleLoader__.load({
         })
       })
 
-      const xIndexes = [0, 6, 12, 18, buckets.length - 1]
+      const lastIndex = buckets.length - 1
+      const xIndexes = [0, Math.round(lastIndex * 0.25), Math.round(lastIndex * 0.5), Math.round(lastIndex * 0.75), lastIndex].filter(
+        (value, index, array) => array.indexOf(value) === index,
+      )
       xIndexes.forEach((index, position) => {
         if (index < 0 || index >= buckets.length) return
         const first = position === 0
@@ -787,7 +794,7 @@ window.__ModuleLoader__.load({
       }, [])
       React.useEffect(() => {
         const element = chartRef.current
-        if (element === null) return undefined
+        if (element === null || typeof ResizeObserver !== 'function') return undefined
         const observer = new ResizeObserver((entries) => {
           const measured = entries[0] === undefined ? 0 : entries[0].contentRect.width
           if (measured > 0) setWidth(Math.max(220, Math.round(measured)))
@@ -796,8 +803,8 @@ window.__ModuleLoader__.load({
         return () => observer.disconnect()
       }, [state.data])
       const data = state.data
-      const win = data === null ? undefined : data.window
-      const currency = data === null ? 'USD' : data.rates.currency
+      const win = data === null || data.window == null ? undefined : data.window
+      const currency = data === null || data.rates == null ? 'USD' : data.rates.currency
       const models = win === undefined ? [] : win.models
       const totals = win === undefined ? null : win.totals
       const empty = win === undefined || win.totals.requests === 0
@@ -823,7 +830,7 @@ window.__ModuleLoader__.load({
       content.push(
         h(
           'div',
-          { style: S.panelHead },
+          { key: 'head', style: S.panelHead },
           h('div', { style: S.panelRange }, t('panel.range')),
           h(
             'div',
@@ -832,20 +839,35 @@ window.__ModuleLoader__.load({
             h('b', { style: S.balanceValue }, balanceText === undefined ? '—' : balanceText),
           ),
         ),
-        h(Tabs, { t, tab, onChange: setTab }),
+        h(Tabs, { key: 'tabs', t, tab, onChange: setTab }),
       )
 
       if (data === null) {
-        content.push(h('div', { style: S.loading }, state.status === 'error' ? t('panel.error') : t('panel.loading')))
+        content.push(h('div', { key: 'loading', style: S.loading }, state.status === 'error' ? t('panel.error') : t('panel.loading')))
         if (state.status === 'error') {
-          content.push(h('div', { style: S.emptyBox }, h('button', { type: 'button', style: S.retry, onClick: () => store.refresh() }, t('panel.retry'))))
+          content.push(
+            h(
+              'div',
+              { key: 'retry', style: S.emptyBox },
+              h('button', { type: 'button', style: S.retry, onClick: () => store.refresh() }, t('panel.retry')),
+            ),
+          )
         }
+      } else if (data.window == null) {
+        content.push(
+          h(
+            'div',
+            { key: 'error', style: S.emptyBox },
+            h('span', null, t('panel.error')),
+            h('button', { type: 'button', style: S.retry, onClick: () => store.refresh() }, t('panel.retry')),
+          ),
+        )
       } else {
         if (statsList.length > 0) {
           content.push(
             h(
               'div',
-              { style: S.stats },
+              { key: 'stats', style: S.stats },
               statsList.map((entry, index) =>
                 h(
                   'div',
@@ -860,7 +882,7 @@ window.__ModuleLoader__.load({
         content.push(
           h(
             'div',
-            { style: S.chartHead },
+            { key: 'chart-head', style: S.chartHead },
             h('span', { style: S.chartTitle }, chartTitle),
             h(
               'div',
@@ -879,7 +901,7 @@ window.__ModuleLoader__.load({
         content.push(
           h(
             'div',
-            { ref: chartRef, style: { width: '100%' } },
+            { key: 'chart', ref: chartRef, style: { width: '100%' } },
             empty
               ? h('div', { style: S.emptyBox }, t('panel.empty'))
               : h(Chart, {
@@ -898,7 +920,7 @@ window.__ModuleLoader__.load({
         content.push(
           h(
             'div',
-            { style: S.foot },
+            { key: 'foot', style: S.foot },
             h('span', null, t('panel.foot')),
             h('span', null, t('panel.updated', { when: timeAgo(data.updatedAt, t) })),
           ),
@@ -909,7 +931,7 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots', 'locale'],
+      inject: ['slots', 'locale', 'sidebarRightTabs', 'sidebarRight'],
       apply(ctx) {
         let t = (key) => key
         try {
@@ -930,34 +952,32 @@ window.__ModuleLoader__.load({
           ),
         )
 
-        ctx.inject(['sidebarRightTabs', 'sidebarRight'], (sub) => {
-          sub.effect(
-            () =>
-              sub.sidebarRightTabs.register({
-                id: TYPE_ID,
-                kind: KIND,
-                title: () => t('panel.title'),
-              }),
-            'token-balance: usage tab type',
-          )
-          sub.effect(
-            () =>
-              ctx.slots.inject('sidebar.right.pane.tab', () =>
-                ctx.slots.register(
-                  { name: 'sidebar.right.pane.tab', key: TYPE_ID, locale: NS },
-                  (props) => h(UsagePanel, { ...props, t: props.t !== undefined ? props.t : t, store }),
-                ),
+        ctx.effect(
+          () =>
+            ctx.sidebarRightTabs.register({
+              id: TYPE_ID,
+              kind: KIND,
+              title: () => t('panel.title'),
+            }),
+          'token-balance: usage tab type',
+        )
+        ctx.effect(
+          () =>
+            ctx.slots.inject('sidebar.right.pane.tab', () =>
+              ctx.slots.register(
+                { name: 'sidebar.right.pane.tab', key: TYPE_ID, locale: NS },
+                (props) => h(UsagePanel, { ...props, t: props.t !== undefined ? props.t : t, store }),
               ),
-            'token-balance: usage tab body',
-          )
-          actions.open = () => {
-            try {
-              sub.sidebarRight.openTab(KIND)
-            } catch {
-              // No Session is mounted; the dock only exists with one, so this is a transient state.
-            }
+            ),
+          'token-balance: usage tab body',
+        )
+        actions.open = () => {
+          try {
+            ctx.sidebarRight.openTab(KIND)
+          } catch {
+            // No Session is mounted; the dock only exists with one, so this is a transient state.
           }
-        })
+        }
       },
     }
   },
