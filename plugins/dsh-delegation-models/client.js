@@ -1,11 +1,11 @@
 window.__ModuleLoader__.load({
-  id: '@mazz/dsh-delegation-models',
+  id: '@fesmazz/dsh-delegation-models',
   factory(require) {
     const React = require('react')
     const h = React.createElement
     const NS = 'dsh-delegation-models'
     const PAGE_ID = 'delegation-models'
-    const PANEL_ID = '@mazz/dsh-delegation-models/panel'
+    const PANEL_ID = '@fesmazz/dsh-delegation-models/panel'
     const PANEL_KIND = 'delegation-models-panel'
 
     const en = {
