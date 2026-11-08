@@ -15,6 +15,11 @@ releases and repository-level changes.
   bundled snapshot and custom rate-card template, and separate Team/Subagent usage.
 - Repository rule requiring a changelog for every plugin (`AGENTS.md`).
 
+### Changed
+- `@mazz/dsh-token-balance` 1.1.0: a 24-hour usage report from session history, a
+  right-Sidebar Cost/Tokens panel, a hover sparkline summary and an editable
+  list-price rate table ([changelog](plugins/dsh-token-balance/CHANGELOG.md)).
+
 ## 2026-11-07 — repository 0.2.0
 
 ### Added
