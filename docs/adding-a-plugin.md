@@ -16,6 +16,7 @@ plugins/dsh-<topic>/
   test/                 # node:test files
   locale/en.json        # meta.title and meta.description
   icon.svg              # original or licensed artwork
+  CHANGELOG.md          # version log; required by AGENTS.md
 ```
 
 Minimum `package.json`:
@@ -59,3 +60,5 @@ Minimum `package.json`:
    the install result.
 4. Add the plugin row to the root `README.md` and its `dsh.client.inject`
    dependencies as needed.
+5. Add `CHANGELOG.md` with the initial version entry, and update it with every
+   behaviour or version change (see `AGENTS.md`, "Versioning and changelogs").

@@ -39,6 +39,17 @@ installable bundle under `plugins/<name>/`, named `@mazz/dsh-<topic>`.
 - UI work is walked like a user. If browser control is unavailable, report that
   rendering is unverified instead of claiming visual success.
 
+## Versioning and changelogs
+
+- Every plugin ships a `CHANGELOG.md` in its package and updates it in the same
+  commit that changes its version or user-visible behaviour. A change is not
+  complete until its changelog entry exists.
+- Plugin versions follow SemVer in `package.json`; the changelog is the
+  human-readable record. Keep entries under `Unreleased` until a version is cut,
+  then date the release section (`## [x.y.z] - YYYY-MM-DD`).
+- The root `CHANGELOG.md` records repository-level changes and links each plugin
+  changelog. `docs/adding-a-plugin.md` includes the file in the scaffold.
+
 ## Privacy and safety
 
 - This repository is **public-meant** unless the owner records otherwise in

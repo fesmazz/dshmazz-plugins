@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>dsh-token-balance v1.1 — concept</title>
+<style>
+  :root {
+    --bg-base: #151517;
+    --bg-sidebar: #1b1b1c;
+    --bg-layer-1: #232324;
+    --bg-layer-2: #2c2c2e;
+    --bg-layer-3: #353638;
+    --menu: rgba(48, 49, 54, .97);
+    --label-primary: #f9fafb;
+    --label-secondary: #cfd3d6;
+    --label-tertiary: #adb2b8;
+    --label-caption: #81858c;
+    --border-l1: rgba(255,255,255,.06);
+    --border-l2: rgba(255,255,255,.12);
+    --border-l3: rgba(255,255,255,.16);
+    --hover: rgba(255,255,255,.08);
+    --blue: #5686fe;
+    --amber: #f7ad31;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1764px; height: 958px; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1764px; height: 958px; transform-origin: top left; }
+  body {
+    background: var(--bg-base);
+    color: var(--label-primary);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 22px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .app { display: flex; width: 100%; height: 100%; }
+
+  /* ---------------- sidebar ---------------- */
+  .sidebar {
+    width: 256px; flex: none; height: 100%;
+    background: var(--bg-sidebar);
+    border-right: .5px solid var(--border-l1);
+    padding: 14px 10px 10px;
+    display: flex; flex-direction: column; gap: 2px;
+    color: var(--label-secondary);
+    font-size: 13px;
+  }
+  .workspace {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; margin-bottom: 10px;
+    border-radius: 8px;
+  }
+  .ws-logo {
+    width: 22px; height: 22px; border-radius: 7px;
+    background: linear-gradient(145deg, #4176e6, #5686fe);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 .5px 0 rgba(255,255,255,.35);
+  }
+  .ws-name { font-weight: 600; color: var(--label-primary); }
+  .ws-chev { margin-left: auto; color: var(--label-caption); }
+  .new-chat {
+    display: flex; align-items: center; gap: 8px;
+    height: 34px; padding: 0 10px; margin-bottom: 2px;
+    border-radius: 9px; color: var(--label-secondary);
+    background: transparent;
+  }
+  .new-chat .kbd { margin-left: auto; color: var(--label-caption); font-size: 11px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    height: 32px; padding: 0 10px; border-radius: 9px;
+    color: var(--label-secondary);
+  }
+  .nav-item .kbd { margin-left: auto; color: var(--label-caption); font-size: 11px; }
+  .section {
+    margin: 16px 10px 6px; font-size: 11px; font-weight: 600;
+    letter-spacing: .02em; color: var(--label-caption);
+  }
+  .session {
+    display: flex; align-items: center; gap: 9px;
+    height: 32px; padding: 0 10px; border-radius: 9px;
+    color: var(--label-secondary); white-space: nowrap; overflow: hidden;
+  }
+  .session span { overflow: hidden; text-overflow: ellipsis; }
+  .session.active { background: #3a3b40; color: var(--label-primary); }
+  .sidebar .spacer { flex: 1; }
+  .account {
+    display: flex; align-items: center; gap: 9px;
+    height: 44px; padding: 0 8px; border-top: .5px solid var(--border-l1);
+  }
+  .avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #43454a; color: var(--label-primary);
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .account .name { font-size: 12.5px; color: var(--label-secondary); }
+  .account .gear { margin-left: auto; color: var(--label-caption); }
+
+  /* ---------------- main ---------------- */
+  .main { flex: 1; min-width: 0; position: relative; height: 100%; }
+  .topbar {
+    height: 48px; display: flex; align-items: center; gap: 10px;
+    padding: 0 18px 0 26px;
+    border-bottom: .5px solid var(--border-l1);
+    color: var(--label-secondary); font-size: 13px;
+  }
+  .topbar .title { color: var(--label-primary); font-weight: 500; }
+  .topbar .badge {
+    font-size: 10.5px; color: var(--label-tertiary);
+    border: .5px solid var(--border-l2); border-radius: 999px;
+    padding: 1px 7px; margin-left: 2px;
+  }
+  .topbar .actions { margin-left: auto; display: flex; gap: 14px; color: var(--label-caption); }
+
+  .chat {
+    position: absolute; left: 0; right: 0; top: 48px; bottom: 144px;
+    padding: 24px 0; overflow: hidden;
+  }
+  .thread { width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  .user-row { display: flex; justify-content: flex-end; }
+  .user-bubble {
+    max-width: 590px; background: var(--bg-layer-2);
+    border-radius: 16px; padding: 10px 14px;
+    color: var(--label-primary); font-size: 14px; line-height: 22px;
+  }
+  .assistant-row { display: flex; gap: 12px; }
+  .assistant-mark {
+    width: 22px; height: 22px; border-radius: 50%; flex: none; margin-top: 2px;
+    background: linear-gradient(145deg, #4176e6, #5686fe);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 .5px 0 rgba(255,255,255,.35);
+  }
+  .assistant { color: var(--label-primary); font-size: 14px; line-height: 23px; }
+  .assistant p { margin: 0 0 10px; }
+  .assistant p:last-child { margin-bottom: 0; }
+  .assistant .dim { color: var(--label-tertiary); }
+  .tool-row {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 30px; padding: 0 10px; margin-top: 2px;
+    border: .5px solid var(--border-l1); border-radius: 8px;
+    background: rgba(255,255,255,.025);
+    color: var(--label-tertiary); font-size: 12px;
+  }
+  .tool-row code { font-family: var(--mono); font-size: 11px; color: var(--label-secondary); }
+
+  /* ---------------- composer ---------------- */
+  .bottom {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding-bottom: 4px;
+  }
+  .composer {
+    width: 952px; height: 112px;
+    background: var(--bg-layer-2);
+    border-radius: 28px;
+    box-shadow: 0 0 0 .5px var(--border-l2), 0 6px 24px rgba(0,0,0,.18), inset 0 .5px 0 rgba(255,255,255,.05);
+    padding: 16px 14px 10px;
+    display: flex; flex-direction: column;
+  }
+  .composer .placeholder { color: var(--label-caption); font-size: 14px; padding: 2px 6px 0 4px; }
+  .composer .row {
+    margin-top: auto; display: flex; align-items: center; gap: 10px;
+    padding: 0 2px;
+  }
+  .icon-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: .5px solid var(--border-l2);
+    color: var(--label-secondary); font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent;
+  }
+  .row .spacer { flex: 1; }
+  .model-chip {
+    display: flex; align-items: center; gap: 7px;
+    height: 28px; padding: 0 10px; border-radius: 999px;
+    background: var(--bg-layer-3); color: var(--label-secondary); font-size: 12px;
+  }
+  .model-chip .chev { color: var(--label-caption); font-size: 10px; }
+  .send {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--label-primary); color: var(--bg-base);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600;
+  }
+  .dock {
+    height: 28px; padding-top: 4px;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .usage-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 22px; padding: 0 8px; border-radius: 7px;
+    font-size: 12px; line-height: 18px; letter-spacing: -.005em;
+    color: var(--label-tertiary);
+    font-variant-numeric: tabular-nums;
+    transition: background .12s ease, color .12s ease;
+  }
+  .usage-pill.hovered { background: var(--hover); color: var(--label-secondary); }
+  .usage-pill b { font-weight: 600; color: var(--label-primary); }
+  .usage-pill .sep { color: var(--label-caption); opacity: .7; }
+  .usage-pill .muted { color: var(--label-caption); }
+  .usage-pill .chev { color: var(--label-caption); margin-left: 1px; }
+  .spark { display: inline-flex; align-items: flex-end; gap: 1.5px; height: 13px; margin-right: 1px; }
+  .spark i { width: 2.5px; border-radius: 1.5px; background: var(--label-tertiary); opacity: .55; }
+  .spark i.b { background: var(--blue); opacity: .95; }
+  .spark i.a { background: var(--amber); opacity: .95; }
+  .ctx-meter {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 22px; padding: 1px 8px; border-radius: 6px;
+    color: var(--label-tertiary); font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ctx-meter .pct { font-size: 13px; }
+
+  /* ---------------- hover panel ---------------- */
+  .panel {
+    position: absolute; left: 630px; bottom: 156px; width: 760px;
+    background: #303136;
+    border-radius: 16px;
+    padding: 15px 18px 13px;
+    box-shadow:
+      0 0 0 .5px rgba(255,255,255,.14),
+      inset 0 .5px 0 rgba(255,255,255,.06),
+      0 18px 60px rgba(0,0,0,.5),
+      0 4px 16px rgba(0,0,0,.35);
+    z-index: 20;
+  }
+  .p-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+  .p-title-wrap { display: flex; align-items: baseline; gap: 9px; }
+  .p-title { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+  .p-sub { font-size: 10.5px; color: var(--label-caption); }
+  .range { display: flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgba(255,255,255,.055); }
+  .range button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 11px; line-height: 16px; padding: 3px 9px; border-radius: 6px;
+    color: var(--label-caption); cursor: default;
+  }
+  .range button.active { background: rgba(255,255,255,.11); color: var(--label-secondary); }
+  .p-tabsrow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .tabs { display: flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgba(255,255,255,.055); }
+  .tab {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 12px; line-height: 17px; font-weight: 500; padding: 4px 13px;
+    border-radius: 6px; color: var(--label-tertiary); cursor: default;
+    min-width: 62px;
+  }
+  .tab.active { background: #f1f3f5; color: #151517; font-weight: 600; box-shadow: 0 0 0 .5px rgba(0,0,0,.15); }
+  .balance { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--label-caption); }
+  .balance b { color: var(--label-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .wallet { color: var(--label-tertiary); display: flex; }
+
+  .stats { display: flex; padding: 13px 0 14px; border-bottom: .5px solid var(--border-l1); margin-bottom: 12px; }
+  .stat { flex: 1; min-width: 0; }
+  .stat + .stat { border-left: .5px solid var(--border-l1); padding-left: 20px; }
+  .stat:first-child { padding-right: 20px; }
+  .stat-value {
+    font-size: 23px; font-weight: 600; line-height: 28px; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label { font-size: 11px; line-height: 15px; color: var(--label-caption); margin-top: 3px; }
+
+  .chart-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 4px; }
+  .chart-title { font-size: 12px; color: var(--label-secondary); }
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--label-tertiary); }
+  .legend .item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+  .legend .sw.pro { background: var(--blue); }
+  .legend .sw.flash { background: var(--amber); }
+  .chart-wrap { position: relative; height: 200px; }
+  .chart-wrap svg { display: block; overflow: visible; }
+
+  .tip {
+    position: absolute; width: 204px; padding: 9px 11px 10px;
+    background: #1b1b1e; border-radius: 10px;
+    box-shadow: 0 0 0 .5px rgba(255,255,255,.14), 0 12px 32px rgba(0,0,0,.5);
+    font-size: 11px; line-height: 17px; color: var(--label-secondary);
+    font-variant-numeric: tabular-nums;
+    display: none;
+  }
+  .tip.show { display: block; }
+  .tip-head { display: flex; align-items: center; justify-content: space-between; color: var(--label-caption); margin-bottom: 5px; }
+  .tip-head .h { color: var(--label-secondary); font-weight: 600; font-size: 11.5px; }
+  .tip-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .tip-row .l { display: flex; align-items: center; gap: 6px; color: var(--label-secondary); }
+  .tip-row .v { color: var(--label-primary); font-weight: 500; }
+  .tip-row .sw { width: 6px; height: 6px; border-radius: 2px; }
+  .tip-sep { height: .5px; background: var(--border-l1); margin: 6px 0; }
+  .tip-total .l { color: var(--label-secondary); }
+  .tip-total .v { font-weight: 600; }
+  .tip-foot { color: var(--label-caption); font-size: 10.5px; margin-top: 2px; }
+
+  .p-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 10px; padding-top: 9px; border-top: .5px solid var(--border-l1);
+    font-size: 10.5px; line-height: 14px; color: var(--label-caption);
+  }
+  .p-foot .right { color: var(--label-caption); }
+
+  .cursor {
+    position: absolute; left: 0; top: 0; width: 22px; height: 22px;
+    z-index: 40; pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+<div class="app">
+  <aside class="sidebar">
+    <div class="workspace">
+      <div class="ws-logo">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.4l1.65 4.95L14.6 8l-4.95 1.65L8 14.6l-1.65-4.95L1.4 8l4.95-1.65L8 1.4z" fill="#fff"/></svg>
+      </div>
+      <span class="ws-name">Projects</span>
+      <svg class="ws-chev" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 4l2.5 2.5L7.5 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </div>
+    <div class="new-chat">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      New chat <span class="kbd">⌘N</span>
+    </div>
+    <div class="nav-item">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4" stroke="currentColor" stroke-width="1.3"/><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Search <span class="kbd">⌘K</span>
+    </div>
+    <div class="section">Today</div>
+    <div class="session active"><span>Token balance v1.1 concept</span></div>
+    <div class="session"><span>Delegation models route check</span></div>
+    <div class="session"><span>Chart hover prototype</span></div>
+    <div class="session"><span>Plugin install docs cleanup</span></div>
+    <div class="section">Yesterday</div>
+    <div class="session"><span>Session log update</span></div>
+    <div class="session"><span>Release notes draft</span></div>
+    <div class="session"><span>Accessibility pass</span></div>
+    <div class="spacer"></div>
+    <div class="account">
+      <div class="avatar">U</div>
+      <span class="name">User</span>
+      <svg class="gear" width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.1" stroke="currentColor" stroke-width="1.2"/><path d="M8 1.7v2M8 12.3v2M1.7 8h2M12.3 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M12.5 3.5l-1.4 1.4M4.9 11.1l-1.4 1.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <span class="title">Token balance v1.1 concept</span>
+      <span class="badge">local</span>
+      <div class="actions">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M8 10l2.6-2.6M8 10L5.4 7.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11v2h10v-2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="3" cy="8" r="1.1" fill="currentColor"/><circle cx="8" cy="8" r="1.1" fill="currentColor"/><circle cx="13" cy="8" r="1.1" fill="currentColor"/></svg>
+      </div>
+    </header>
+
+    <div class="chat">
+      <div class="thread">
+        <div class="user-row">
+          <div class="user-bubble">Add a hover usage panel to the balance line: cost by hour and model, plus token consumption. Show me a concept first.</div>
+        </div>
+        <div class="assistant-row">
+          <div class="assistant-mark">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1.4l1.65 4.95L14.6 8l-4.95 1.65L8 14.6l-1.65-4.95L1.4 8l4.95-1.65L8 1.4z" fill="#fff"/></svg>
+          </div>
+          <div class="assistant">
+            <p>Here's the concept: hovering the balance line opens a usage panel above the composer. The <strong>Cost</strong> tab stacks estimated spend by hour and model; the <strong>Tokens</strong> tab shows consumption. Bars show their own breakdown on hover — and the panel can be pinned open by clicking the line.</p>
+            <p class="dim">Values come from local session events and the account balance; cost uses DeepSeek list prices.</p>
+          </div>
+        </div>
+        <div class="assistant-row">
+          <div style="width:22px;flex:none"></div>
+          <div class="tool-row">Read <code>plugins/dsh-token-balance/client.js</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="composer">
+        <div class="placeholder">Ask anything…</div>
+        <div class="row">
+          <div class="icon-btn">+</div>
+          <div class="spacer"></div>
+          <div class="model-chip">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1.4l1.65 4.95L14.6 8l-4.95 1.65L8 14.6l-1.65-4.95L1.4 8l4.95-1.65L8 1.4z" fill="#7aaaff"/></svg>
+            DeepSeek-V4.1-Flash <span class="chev">▾</span>
+          </div>
+          <div class="send">↑</div>
+        </div>
+      </div>
+      <div class="dock">
+        <div class="usage-pill hovered" id="usagePill">
+          <span class="spark" aria-hidden="true">
+            <i style="height:4px"></i><i style="height:7px"></i><i style="height:5px"></i><i style="height:9px"></i><i style="height:6px"></i><i style="height:11px" class="b"></i><i style="height:8px" class="a"></i>
+          </span>
+          <span>Balance <b>$20.00</b></span>
+          <span class="sep">·</span>
+          <span>Today <b id="dockCost">$1.73</b></span>
+          <span class="sep">·</span>
+          <span><b id="dockTokens">10.4M</b> <span class="muted">tokens</span></span>
+          <svg class="chev" width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2.2 6.2L5 3.4l2.8 2.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="ctx-meter">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.4" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
+            <circle cx="7" cy="7" r="5.4" stroke="#adb2b8" stroke-width="2" stroke-linecap="round"
+              stroke-dasharray="12.9 34" transform="rotate(-90 7 7)"/>
+          </svg>
+          <span class="pct">38%</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="panel" id="panel" role="dialog" aria-label="Usage">
+  <div class="p-head">
+    <div class="p-title-wrap">
+      <span class="p-title">Usage</span>
+      <span class="p-sub">estimated from local sessions</span>
+    </div>
+    <div class="range"><button class="active">Today</button><button>7d</button><button>30d</button></div>
+  </div>
+  <div class="p-tabsrow">
+    <div class="tabs">
+      <button class="tab" data-tab="cost">Cost</button>
+      <button class="tab" data-tab="tokens">Tokens</button>
+    </div>
+    <div class="balance">
+      <span class="wallet"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2.2" y="4" width="11.6" height="8.6" rx="2.2" stroke="currentColor" stroke-width="1.2"/><path d="M2.4 6.3h11.2" stroke="currentColor" stroke-width="1.2"/><circle cx="11.1" cy="9.1" r=".9" fill="currentColor"/></svg></span>
+      Balance <b>$20.00</b> USD
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="chart-head">
+    <span class="chart-title" id="chartTitle">Cost by hour</span>
+    <div class="legend" id="legend">
+      <span class="item"><span class="sw pro"></span>deepseek-v4-pro</span>
+      <span class="item"><span class="sw flash"></span>deepseek-flash</span>
+    </div>
+  </div>
+
+  <div class="chart-wrap" id="chartWrap">
+    <svg id="chart" width="724" height="200" viewBox="0 0 724 200" aria-hidden="true"></svg>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <div class="p-foot">
+    <span>Updated 20s ago</span>
+    <span class="right">DeepSeek list prices · USD</span>
+  </div>
+</div>
+
+<svg class="cursor" id="cursor" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M6 3.2 L6 19.6 L10.2 15.2 L12.7 21.2 L15.3 20.1 L12.8 14.3 L18.4 14.3 Z"
+        fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/>
+</svg>
+</div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var state = params.get('state') || 'cost';
+  var scale = Number(params.get('scale') || '1') || 1;
+  if (params.get('nobf') === '1') { document.getElementById('panel').style.backdropFilter = 'none'; document.getElementById('panel').style.webkitBackdropFilter = 'none'; }
+  if (params.get('nocursor') === '1') { document.getElementById('cursor').style.display = 'none'; }
+  if (scale !== 1) {
+    var w = 1764 * scale, h = 958 * scale;
+    document.documentElement.style.width = w + 'px';
+    document.documentElement.style.height = h + 'px';
+    document.body.style.width = w + 'px';
+    document.body.style.height = h + 'px';
+    document.getElementById('stage').style.transform = 'scale(' + scale + ')';
+  }
+  var tab = state.indexOf('tokens') === 0 ? 'tokens' : 'cost';
+  var showTip = state.indexOf('tooltip') >= 0 || state.indexOf('tokens') === 0;
+  var hoverHour = 19;
+
+  var proTokens = [0.17,0.35,0.46,0.11,0,0.08,0.19,0.04,0,0,0,0,0,0,0,0.04,0.42,0.54,0.65,0.79,0.59,0.23,0.13,0.04];
+  var flashTokens = [0.24,0.40,0.48,0.56,0.08,0.64,0.48,0.24,0,0,0,0,0,0,0,0.08,0.24,0.24,0.24,0.32,0.40,0.40,0.32,0.16];
+  var rate = { pro: 0.30, flash: 0.05 };
+  var reqPerM = { pro: 41.7, flash: 25 };
+  var sum = function (a) { return a.reduce(function (x, y) { return x + y; }, 0); };
+  var proCost = proTokens.map(function (t) { return t * rate.pro; });
+  var flashCost = flashTokens.map(function (t) { return t * rate.flash; });
+  var costTotal = sum(proCost) + sum(flashCost);
+  var tokensTotal = sum(proTokens) + sum(flashTokens);
+  var requests = Math.round(sum(proTokens) * reqPerM.pro + sum(flashTokens) * reqPerM.flash);
+  var fmtMoney = function (v) { return '$' + v.toFixed(2); };
+  var fmtM = function (v, digits) { digits = digits === undefined ? 1 : digits; return (v >= 1000 ? (v / 1000).toFixed(2) + 'B' : v.toFixed(digits) + 'M'); };
+
+  document.getElementById('dockCost').textContent = fmtMoney(costTotal);
+  document.getElementById('dockTokens').textContent = fmtM(tokensTotal);
+
+  var hourlyPro = tab === 'cost' ? proCost : proTokens;
+  var hourlyFlash = tab === 'cost' ? flashCost : flashTokens;
+  var yMax = tab === 'cost' ? 0.30 : 1.2;
+  var yTicks = tab === 'cost'
+    ? [{ v: 0, label: '0' }, { v: 0.1, label: '$0.10' }, { v: 0.2, label: '$0.20' }, { v: 0.3, label: '$0.30' }]
+    : [{ v: 0, label: '0' }, { v: 0.4, label: '0.4M' }, { v: 0.8, label: '0.8M' }, { v: 1.2, label: '1.2M' }];
+
+  var statSets = {
+    cost: [
+      { value: fmtMoney(costTotal), label: 'Est. cost today' },
+      { value: requests.toLocaleString('en-US'), label: 'API requests' },
+      { value: fmtM(tokensTotal), label: 'Tokens' }
+    ],
+    tokens: [
+      { value: fmtM(tokensTotal), label: 'Total tokens' },
+      { value: fmtM(tokensTotal * 0.923), label: 'Prompt tokens' },
+      { value: fmtM(tokensTotal * 0.077), label: 'Completion tokens' }
+    ]
+  };
+  var statsHtml = statSets[tab].map(function (s) {
+    return '<div class="stat"><div class="stat-value">' + s.value + '</div><div class="stat-label">' + s.label + '</div></div>';
+  }).join('');
+  document.getElementById('stats').innerHTML = statsHtml;
+  document.getElementById('chartTitle').textContent = tab === 'cost' ? 'Cost by hour · Today' : 'Tokens by hour · Today';
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) {
+    b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+  });
+
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('chart');
+  var ML = 36, MT = 6, MB = 24;
+  var PW = 724 - ML, PH = 200 - MT - MB;
+  var slot = PW / 24, barW = 12;
+  var y = function (v) { return MT + PH - (v / yMax) * PH; };
+  var xCenter = function (i) { return ML + slot * i + slot / 2; };
+  var append = function (node) { svg.appendChild(node); return node; };
+  var mk = function (name, attrs) {
+    var n = document.createElementNS(NS, name);
+    Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    return append(n);
+  };
+  var roundedTop = function (x, yy, w, h, r) {
+    if (h <= 0.5) return '';
+    r = Math.min(r, h);
+    return 'M' + x + ' ' + (yy + h) + ' L' + x + ' ' + (yy + r) + ' Q' + x + ' ' + yy + ' ' + (x + r) + ' ' + yy + ' L' + (x + w - r) + ' ' + yy + ' Q' + (x + w) + ' ' + yy + ' ' + (x + w) + ' ' + (yy + r) + ' L' + (x + w) + ' ' + (yy + h) + ' Z';
+  };
+
+  yTicks.forEach(function (t) {
+    var gy = y(t.v);
+    mk('line', { x1: ML, x2: 724, y1: gy, y2: gy, stroke: 'rgba(255,255,255,.07)', 'stroke-width': 1 });
+    var label = document.createElementNS(NS, 'text');
+    label.setAttribute('x', ML - 10); label.setAttribute('y', gy + 3.5);
+    label.setAttribute('text-anchor', 'end');
+    label.setAttribute('fill', '#81858c'); label.setAttribute('font-size', '10');
+    label.setAttribute('style', 'font-variant-numeric: tabular-nums');
+    label.textContent = t.label;
+    svg.appendChild(label);
+  });
+
+  for (var i = 0; i < 24; i++) {
+    var p = hourlyPro[i], f = hourlyFlash[i];
+    var totalH = (p + f) / yMax * PH;
+    if (totalH <= 0.6) continue;
+    var x = ML + slot * i + (slot - barW) / 2;
+    var dim = showTip && i !== hoverHour ? 0.42 : 1;
+    if (showTip && i === hoverHour) {
+      mk('rect', { x: ML + slot * i, y: MT, width: slot, height: PH, fill: 'rgba(255,255,255,.045)', rx: 4 });
+    }
+    var g = document.createElementNS(NS, 'g');
+    g.setAttribute('opacity', dim);
+    var hP = p / yMax * PH;
+    var hF = f / yMax * PH;
+    var cursorY = MT + PH;
+    if (hP > 0.5) {
+      var py = cursorY - hP;
+      var pathP = document.createElementNS(NS, 'path');
+      pathP.setAttribute('d', hF > 0.5
+        ? 'M' + x + ' ' + cursorY + ' L' + x + ' ' + py + ' L' + (x + barW) + ' ' + py + ' L' + (x + barW) + ' ' + cursorY + ' Z'
+        : roundedTop(x, py, barW, hP, 3));
+      pathP.setAttribute('fill', '#5686fe');
+      g.appendChild(pathP);
+      cursorY = py - (hF > 0.5 ? 1.5 : 0);
+    }
+    if (hF > 0.5) {
+      var fy = cursorY - hF;
+      var pathF = document.createElementNS(NS, 'path');
+      pathF.setAttribute('d', roundedTop(x, fy, barW, hF, 3));
+      pathF.setAttribute('fill', '#f7ad31');
+      g.appendChild(pathF);
+    }
+    svg.appendChild(g);
+  }
+
+  [[0, '00:00'], [4, '04:00'], [8, '08:00'], [12, '12:00'], [16, '16:00'], [20, '20:00'], [23, '23:00']].forEach(function (pair) {
+    var idx = pair[0], text = pair[1];
+    var t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', idx === 0 ? ML : idx === 23 ? 724 : xCenter(idx));
+    t.setAttribute('y', 200 - 6);
+    t.setAttribute('text-anchor', idx === 0 ? 'start' : idx === 23 ? 'end' : 'middle');
+    t.setAttribute('fill', '#81858c'); t.setAttribute('font-size', '10');
+    t.textContent = text;
+    svg.appendChild(t);
+  });
+
+  if (showTip) {
+    var tip = document.getElementById('tip');
+    tip.classList.add('show');
+    var pv = hourlyPro[hoverHour], fv = hourlyFlash[hoverHour];
+    var reqs = Math.round(proTokens[hoverHour] * reqPerM.pro + flashTokens[hoverHour] * reqPerM.flash);
+    var valueOf = function (v) { return tab === 'cost' ? fmtMoney(v) : fmtM(v, 2); };
+    var foot = tab === 'cost'
+      ? fmtM(proTokens[hoverHour] + flashTokens[hoverHour], 2) + ' tokens · estimated'
+      : 'in ' + fmtM((proTokens[hoverHour] + flashTokens[hoverHour]) * 0.92, 2) + ' · out ' + fmtM((proTokens[hoverHour] + flashTokens[hoverHour]) * 0.08, 2);
+    tip.innerHTML = [
+      '<div class="tip-head"><span class="h">' + (hoverHour < 10 ? '0' : '') + hoverHour + ':00</span><span>' + reqs + ' requests</span></div>',
+      '<div class="tip-row"><span class="l"><span class="sw" style="background:#5686fe"></span>deepseek-v4-pro</span><span class="v">' + valueOf(pv) + '</span></div>',
+      '<div class="tip-row"><span class="l"><span class="sw" style="background:#f7ad31"></span>deepseek-flash</span><span class="v">' + valueOf(fv) + '</span></div>',
+      '<div class="tip-sep"></div>',
+      '<div class="tip-row tip-total"><span class="l">Total</span><span class="v">' + (tab === 'cost' ? fmtMoney(Number(pv.toFixed(2)) + Number(fv.toFixed(2))) : valueOf(pv + fv)) + '</span></div>',
+      '<div class="tip-foot">' + foot + '</div>'
+    ].join('');
+    var barCenter = xCenter(hoverHour);
+    var left = Math.max(0, Math.min(724 - 204, barCenter - 204 - 18));
+    tip.style.left = left + 'px';
+    tip.style.top = '12px';
+  }
+
+  var cursorEl = document.getElementById('cursor');
+  if (state === 'cost') {
+    var pill = document.getElementById('usagePill').getBoundingClientRect();
+    cursorEl.style.left = ((pill.right / scale) - 2) + 'px';
+    cursorEl.style.top = ((pill.top / scale) + 3) + 'px';
+  } else {
+    var wrapRect = document.getElementById('chartWrap').getBoundingClientRect();
+    cursorEl.style.left = ((wrapRect.left / scale) + xCenter(hoverHour) + 3) + 'px';
+    cursorEl.style.top = ((wrapRect.top / scale) + 30) + 'px';
+  }
+})();
+</script>
+</body>
+</html>

@@ -30,6 +30,7 @@ load its client module.
   `index.js`, optional `client.js`, `src/`, `test/`, `locale/`, `icon.svg`.
 - `docs/adding-a-plugin.md` — how to add the next plugin.
 - `docs/delegation-models.md` — profiles and routing for the delegation plugin.
+- `docs/mockups/` — UI proposals awaiting owner review (V1.1/V1.2).
 - `AGENTS.md` — rules for agents working in this repository.
 - `pnpm-workspace.yaml` — workspace listing (`plugins/*`).
 
@@ -41,6 +42,13 @@ its directory:
 ```sh
 cd plugins/dsh-token-balance && node --test
 ```
+
+## Versioning
+
+Each plugin follows SemVer and keeps a `CHANGELOG.md` next to its package; the root
+[CHANGELOG.md](CHANGELOG.md) lists plugin releases and repository changes. The
+changelog requirement is a repository rule in
+[AGENTS.md](AGENTS.md#versioning-and-changelogs).
 
 ## Licence
 
