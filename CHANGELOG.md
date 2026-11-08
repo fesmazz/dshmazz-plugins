@@ -14,6 +14,11 @@ releases and repository-level changes.
   panel, file-or-paste auto-configure with re-apply on change, a Rates tab with a
   bundled snapshot and custom rate-card template, and separate Team/Subagent usage.
 - Repository rule requiring a changelog for every plugin (`AGENTS.md`).
+- Harness extension patch for 0.2.1-rc.5 under
+  [`patches/deepseek-harness/`](patches/deepseek-harness/README.md): optional
+  teammate route fields and `agentOptions` passthrough (V1.2 groundwork).
+- V1.1/V1.2 implementation plan in
+  [`docs/plans/delegation-v1.1.md`](docs/plans/delegation-v1.1.md).
 
 ## 2026-11-07 — repository 0.2.0
 
