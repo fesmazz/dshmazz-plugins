@@ -11,8 +11,10 @@ All notable changes to this plugin. Root repository changelog:
   several projects can share one root directory.
 - Create, rename, and delete projects; assign a session to a project; **move a
   session from one project to another**; remove a session from its project.
-- Web UI: a **Settings → Projects** management page and a project badge in the
-  session-row leading cell.
+- Web UI: a **Projects panel in the left sidebar rail** with create/rename/
+  delete/move/remove and **drag-to-assign** (drag a session's project badge onto
+  a project), a **Settings → Projects** page, and a draggable project badge in
+  the session-row leading cell.
 - Same-origin JSON API under `/dsh-project-sections` and an agent `project`
   tool (`list`/`create`/`rename`/`delete`/`assign`/`move`/`unassign`).
 - Durable state in the `project_sections` storage domain.

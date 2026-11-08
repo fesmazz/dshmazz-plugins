@@ -5,6 +5,7 @@ window.__ModuleLoader__.load({
     const { useState, useEffect, useCallback } = React
     const h = React.createElement
     const API = '/dsh-project-sections'
+    const DRAG_TYPE = 'application/x-dsh-project-session'
 
     const t = {
       text: 'var(--dsw-alias-label-primary, currentColor)',
@@ -111,6 +112,19 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /** Left-rail panel icon. */
+    function ProjectsIcon(props) {
+      const size = props.size || 20
+      return h(
+        'svg',
+        { width: size, height: size, viewBox: '0 0 24 24', 'aria-hidden': true },
+        h('path', {
+          fill: 'currentColor',
+          d: 'M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z',
+        }),
+      )
+    }
+
     // One shared snapshot fetch (short TTL) feeds every session-row badge, so a
     // sidebar with hundreds of rows does not issue hundreds of requests.
     let badgeCache = null
@@ -138,6 +152,7 @@ window.__ModuleLoader__.load({
       return badgePromise
     }
 
+    /** Draggable project badge on each session row; drag onto a project to assign. */
     function ProjectBadge(props) {
       const [assignment, setAssignment] = useState(null)
       useEffect(() => {
@@ -153,11 +168,30 @@ window.__ModuleLoader__.load({
           alive = false
         }
       }, [props.sessionId])
-      if (!assignment) return null
-      return h(Dot, { color: assignment.color, size: 8, title: assignment.name || 'Project' })
+
+      return h(
+        'span',
+        {
+          draggable: true,
+          title: assignment ? `${assignment.name} — drag to a project to move` : 'Drag to a project',
+          onDragStart: (e) => {
+            e.dataTransfer.setData(DRAG_TYPE, props.sessionId)
+            e.dataTransfer.setData('text/plain', props.sessionId)
+            e.dataTransfer.effectAllowed = 'move'
+          },
+          style: {
+            display: 'inline-flex',
+            alignItems: 'center',
+            cursor: 'grab',
+            width: 14,
+            height: 14,
+          },
+        },
+        assignment ? h(Dot, { color: assignment.color, size: 9 }) : h(Dot, { color: '#9ca3af', size: 7 }),
+      )
     }
 
-    function ProjectsSection() {
+    function ProjectsView() {
       const [state, setState] = useState(null)
       const [error, setError] = useState(null)
       const [busy, setBusy] = useState(false)
@@ -168,6 +202,7 @@ window.__ModuleLoader__.load({
       const [editName, setEditName] = useState('')
       const [assigning, setAssigning] = useState(null)
       const [assignSession, setAssignSession] = useState('')
+      const [dropHover, setDropHover] = useState(null)
 
       const load = useCallback(async () => {
         try {
@@ -200,6 +235,13 @@ window.__ModuleLoader__.load({
         setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
       }
 
+      function dropSession(projectId, e) {
+        e.preventDefault()
+        const sessionId = e.dataTransfer.getData(DRAG_TYPE) || e.dataTransfer.getData('text/plain')
+        setDropHover(null)
+        if (sessionId) run(async () => api('POST', '/assign', { projectId, sessionId }))
+      }
+
       if (error) {
         return h('div', { style: { padding: 16, color: t.danger, fontSize: 13 } }, 'Project Sections error: ' + error)
       }
@@ -214,7 +256,9 @@ window.__ModuleLoader__.load({
 
       return h(
         'div',
-        { style: { padding: 16, color: t.text, fontSize: 13, lineHeight: 1.5 } },
+        { style: { padding: 16, color: t.text, fontSize: 13, lineHeight: 1.5, overflowY: 'auto' } },
+
+        h('div', { style: { fontSize: 15, fontWeight: 600, marginBottom: 12 } }, 'Projects'),
 
         // Create row
         h(
@@ -239,16 +283,33 @@ window.__ModuleLoader__.load({
           ? h(
               'div',
               { style: { color: t.textSecondary } },
-              'No projects yet. Create one above, then assign sessions to it. Projects are independent of workspace folders, so several projects can share the same root folder.',
+              'No projects yet. Create one above, then drag a session from the sidebar onto a project, or use "Assign session…" below.',
             )
           : state.projects.map((project) => {
               const open = !!expanded[project.id]
               const isEditing = editing === project.id
+              const highlighted = dropHover === project.id
               return h(
                 'div',
                 {
                   key: project.id,
-                  style: { border: `1px solid ${t.border}`, borderRadius: 8, marginBottom: 10, background: t.bgLayer1, padding: 10 },
+                  onDragOver: (e) => {
+                    e.preventDefault()
+                    e.dataTransfer.dropEffect = 'move'
+                    if (dropHover !== project.id) setDropHover(project.id)
+                  },
+                  onDragLeave: (e) => {
+                    if (dropHover === project.id) setDropHover(null)
+                  },
+                  onDrop: (e) => dropSession(project.id, e),
+                  style: {
+                    border: `1px solid ${highlighted ? t.brand : t.border}`,
+                    borderRadius: 8,
+                    marginBottom: 10,
+                    background: highlighted ? 'var(--dsw-alias-bg-layer-2, rgba(0,0,0,0.04))' : t.bgLayer1,
+                    padding: 10,
+                    boxShadow: highlighted ? `0 0 0 1px ${t.brand}` : undefined,
+                  },
                 },
                 h(
                   'div',
@@ -292,7 +353,7 @@ window.__ModuleLoader__.load({
                       'div',
                       { style: { marginTop: 10, paddingLeft: 20 } },
                       project.sessions.length === 0
-                        ? h('div', { style: { color: t.textSecondary, fontSize: 12 } }, 'No sessions assigned.')
+                        ? h('div', { style: { color: t.textSecondary, fontSize: 12 } }, 'No sessions assigned. Drag a session here or assign one below.')
                         : project.sessions.map((session) =>
                             h(
                               'div',
@@ -353,8 +414,12 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots'],
       apply(ctx) {
+        ctx.slots.inject('sidebar.panellist', () =>
+          ctx.slots.register({ name: 'sidebar.panellist', id: 'projects', order: 5, label: 'Projects' }, ProjectsIcon),
+        )
+        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'projects' }, ProjectsView))
         ctx.slots.inject('settings.section', () =>
-          ctx.slots.register({ name: 'settings.section', id: 'projects', order: 25, label: 'Projects' }, ProjectsSection),
+          ctx.slots.register({ name: 'settings.section', id: 'projects', order: 25, label: 'Projects' }, ProjectsView),
         )
         ctx.slots.inject('sidebar.session.row.leading', () =>
           ctx.slots.register({ name: 'sidebar.session.row.leading', id: 'project-mark', order: 5 }, ProjectBadge),

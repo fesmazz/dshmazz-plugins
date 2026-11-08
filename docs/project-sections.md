@@ -18,10 +18,13 @@ inside it.
 
 ## Surfaces
 
-- **Settings → Projects**: create/rename/delete projects, assign a recent
-  session, move a session to another project, remove a session.
+- **Left-rail Projects panel** (`sidebar.panellist` → `main` key `projects`):
+  create/rename/delete projects, assign a recent session, move a session,
+  remove a session, and **drag a session onto a project to assign it**.
+- **Settings → Projects**: the same management view inside Settings.
 - **Session rows**: a small colored dot in the leading cell marks the session's
-  project (hover shows the project name).
+  project; it is a **drag handle** — drag it onto a project in the Projects
+  panel to assign (or move) the session.
 - **JSON API** (same origin as the Web UI; deliberately outside `/api`, which the
   harness auth-gates):
 
