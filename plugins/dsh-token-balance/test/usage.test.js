@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { emptyUsage, sumUsage } from '../src/usage.js'
+import { emptyUsage, pickAxisMax, projectOf, sessionBreakdown, sumUsage } from '../src/usage.js'
 
 test('emptyUsage starts every counter at zero', () => {
   assert.deepEqual(emptyUsage(), {
@@ -39,4 +39,38 @@ test('sumUsage falls back to the sum when a record omits the total', () => {
     { type: 'assistant/message', data: { usage: { inputTokens: 1, outputTokens: 2, cacheReadTokens: 3, cacheWriteTokens: 4 } } },
   ])
   assert.equal(total.totalTokens, 10)
+})
+
+
+test('pickAxisMax chooses the smallest allowed range that fits, floored at 0.5', () => {
+  assert.equal(pickAxisMax([0]), 0.5)
+  assert.equal(pickAxisMax([0.5]), 0.5)
+  assert.equal(pickAxisMax([0.6]), 1)
+  assert.equal(pickAxisMax([1.9]), 2)
+  assert.equal(pickAxisMax([3]), 5)
+  assert.equal(pickAxisMax([60]), 100)
+  assert.equal(pickAxisMax([200]), 100)
+})
+
+test('projectOf reads the last path segment of a session header', () => {
+  assert.equal(projectOf({ cwd: '/Users/x/Projects/dshmazz-plugins' }), 'dshmazz-plugins')
+  assert.equal(projectOf({ workspace: '/Users/x/Projects/Hundun' }), 'Hundun')
+  assert.equal(projectOf({}), 'Unknown project')
+})
+
+test('sessionBreakdown groups records by project and by session', () => {
+  const meta = new Map([
+    ['s1', { header: { cwd: '/p/one', title: 'One' } }],
+    ['s2', { header: { cwd: '/p/two' } }],
+  ])
+  const breakdown = sessionBreakdown([
+    { sessionId: 's1', totalTokens: 100, requests: 1 },
+    { sessionId: 's1', totalTokens: 50, requests: 1 },
+    { sessionId: 's2', totalTokens: 25, requests: 1 },
+  ], meta, (record) => record.totalTokens / 100)
+  assert.equal(breakdown.projects.length, 2)
+  assert.equal(breakdown.projects[0].name, 'one')
+  assert.equal(breakdown.projects[0].cost, 1.5)
+  assert.equal(breakdown.sessions.length, 2)
+  assert.equal(breakdown.sessions[0].id, 's1')
 })

@@ -25,7 +25,7 @@ import fs from 'node:fs'
 
 import { normalizeAccountBalance, normalizeApiKeyBalance } from './src/balance.js'
 import { DEFAULT_RATES, costOfUsage, normalizeRates } from './src/pricing.js'
-import { hourlyBuckets, sumUsageRecords, usageRecords } from './src/usage.js'
+import { hourlyBuckets, sessionBreakdown, sumUsageRecords, usageRecords } from './src/usage.js'
 
 /** Cordis plugin name. */
 export const name = 'token-balance'
@@ -222,7 +222,7 @@ export function apply(ctx, config = {}) {
           const createdAt = typeof record.header.createdAt === 'number' ? record.header.createdAt : 0
           const live = record.live === true
           if (!live && createdAt < windowStart) continue
-          list.push({ id, live, createdAt })
+          list.push({ id, live, createdAt, header: record.header })
         }
         return list
       } catch {
@@ -234,6 +234,7 @@ export function apply(ctx, config = {}) {
         id: sessionIdOf(session),
         live: true,
         session,
+        header: session.header,
       }))
       .filter((candidate) => typeof candidate.id === 'string')
   }
@@ -269,6 +270,8 @@ export function apply(ctx, config = {}) {
       for (const record of entry.usage) if (record.time >= windowStart) records.push({ ...record, sessionId: id })
     }
     const costOf = (record) => costOfUsage(rates, record.model, record.time, record)
+    const metaById = new Map(list.map((candidate) => [candidate.id, { header: candidate.header }]))
+    const breakdown = sessionBreakdown(records, metaById, costOf)
     const window = hourlyBuckets(records, { now, hours, bucketMs, costOf })
     const session =
       sessionId === undefined
@@ -296,6 +299,7 @@ export function apply(ctx, config = {}) {
       },
       window,
       session,
+      breakdown,
       meta: { sessionSource: query === undefined ? 'live' : 'sessionQuery', sessions: list.length },
       updatedAt: now,
     }

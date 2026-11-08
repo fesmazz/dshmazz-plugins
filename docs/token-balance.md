@@ -76,3 +76,15 @@ cd plugins/dsh-token-balance && node --test
 
 The suite covers rate normalization, peak-hour boundaries, per-event cost, rolling
 window bucketing, event spellings, and the host route with mocked sessions.
+
+## Y-axis and consumption breakdown (1.3.2)
+
+The cost chart has a Y-axis selector with fixed USD ranges: $0.50, $1, $1.50, $2,
+$5, $10, $20, $50 and $100. Auto picks the smallest range that fits the current
+window; an explicit smaller range is upgraded to the next fitting range. The token
+view keeps its automatic scale because it is not denominated in USD.
+
+Below the chart, two doughnut charts show consumption by **project** (the last path
+segment of the session's workspace/cwd) and by **session**, over the selected
+window. The grouped table below repeats the same totals: project rows with their
+sessions nested beneath them, each with estimated cost and tokens.

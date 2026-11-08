@@ -40,6 +40,16 @@ window.__ModuleLoader__.load({
       'panel.costPer30m': 'Cost per 30 minutes',
       'panel.tokensPer30m': 'Tokens per 30 minutes',
       'panel.costPer2h': 'Cost per 2 hours',
+      'panel.axis': 'Y axis',
+      'panel.axisAuto': 'Auto',
+      'panel.breakdown': 'Consumption',
+      'panel.byProject': 'By project',
+      'panel.bySession': 'By session',
+      'panel.project': 'Project',
+      'panel.session': 'Session',
+      'panel.other': 'Other',
+      'panel.cost': 'Cost',
+      'panel.tokens': 'Tokens',
       'panel.tokensPer2h': 'Tokens per 2 hours',
       'panel.hint': 'Hover a bar for details',
       'panel.foot': 'Estimated from local sessions · DeepSeek list prices',
@@ -93,6 +103,16 @@ window.__ModuleLoader__.load({
       'panel.costPer30m': '每 30 分钟费用',
       'panel.tokensPer30m': '每 30 分钟 Token',
       'panel.costPer2h': '每 2 小时费用',
+      'panel.axis': 'Y 轴',
+      'panel.axisAuto': '自动',
+      'panel.breakdown': '消费构成',
+      'panel.byProject': '按项目',
+      'panel.bySession': '按会话',
+      'panel.project': '项目',
+      'panel.session': '会话',
+      'panel.other': '其他',
+      'panel.cost': '费用',
+      'panel.tokens': 'Token',
       'panel.tokensPer2h': '每 2 小时 Token',
       'panel.hint': '悬停柱状图查看明细',
       'panel.foot': '根据本地会话与 DeepSeek 目录价估算',
@@ -683,7 +703,7 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function Chart({ t, buckets, models, metric, currency, width, hoverIndex, onHover, label }) {
+    function Chart({ t, buckets, models, metric, currency, width, hoverIndex, onHover, label, axisMax }) {
       const height = 190
       const marginLeft = 46
       const marginRight = 6
@@ -694,7 +714,7 @@ window.__ModuleLoader__.load({
       const slot = plotWidth / buckets.length
       const barWidth = Math.max(3, Math.min(14, slot * 0.55))
       const values = buckets.map((bucket) => bucketValue(bucket, models, metric))
-      const max = niceMax(Math.max(0, ...values))
+      const max = metric === 'cost' && Number.isFinite(axisMax) && axisMax > 0 ? axisMax : niceMax(Math.max(0, ...values))
       const yOf = (value) => marginTop + plotHeight - (max > 0 ? (value / max) * plotHeight : 0)
       const centerOf = (index) => marginLeft + slot * index + slot / 2
       const ticks = [0, max / 2, max]
@@ -868,6 +888,81 @@ window.__ModuleLoader__.load({
       )
     }
 
+
+    function Breakdown({ t, breakdown, currency }) {
+      const projects = breakdown.projects === undefined ? [] : breakdown.projects
+      const sessions = breakdown.sessions === undefined ? [] : breakdown.sessions
+      const palette = ['#3aa0ff', '#f5a623', '#3fbf7f', '#c084fc', '#ff6464', '#5ac8fa', '#e879f9']
+      const compact = (rows) => {
+        if (rows.length <= 6) return rows
+        const head = rows.slice(0, 5)
+        const other = rows.slice(5).reduce((sum, row) => ({ name: t('panel.other'), cost: sum.cost + row.cost, totalTokens: sum.totalTokens + row.totalTokens }), { cost: 0, totalTokens: 0 })
+        return [...head, other]
+      }
+      const donut = (label, rows) => {
+        const data = compact(rows)
+        const total = data.reduce((sum, row) => sum + row.cost, 0)
+        const size = 120
+        const radius = 44
+        const circumference = 2 * Math.PI * radius
+        let offset = 0
+        const segments = total <= 0
+          ? [h('circle', { key: 'empty', cx: 60, cy: 60, r: radius, fill: 'none', stroke: '#25405a', strokeWidth: 12 })]
+          : data.map((row) => {
+              const dash = (row.cost / total) * circumference
+              const segment = h('circle', {
+                key: row.name,
+                cx: 60,
+                cy: 60,
+                r: radius,
+                fill: 'none',
+                stroke: palette[data.indexOf(row) % palette.length],
+                strokeWidth: 12,
+                strokeDasharray: dash + ' ' + (circumference - dash),
+                strokeDashoffset: String(-offset),
+                transform: 'rotate(-90 60 60)',
+              })
+              offset += dash
+              return segment
+            })
+        return h(
+          'div',
+          { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' } },
+          h('svg', { width: size, height: size, viewBox: '0 0 ' + size + ' ' + size, role: 'img', 'aria-label': label }, segments),
+          h('div', { style: { fontSize: '11px', color: '#8ea3b8' } }, label),
+        )
+      }
+      const rows = []
+      for (const project of projects) {
+        rows.push(h('tr', { key: 'p-' + project.name, style: { borderTop: '1px solid #1e3349' } },
+          h('td', { style: { padding: '4px 6px', fontWeight: 600 } }, project.name),
+          h('td', { style: { padding: '4px 6px', textAlign: 'right' } }, formatCost(project.cost, currency)),
+          h('td', { style: { padding: '4px 6px', textAlign: 'right' } }, formatTokens(project.totalTokens)),
+        ))
+        for (const session of project.sessions) {
+          rows.push(h('tr', { key: 's-' + session.id },
+            h('td', { style: { padding: '3px 6px 3px 20px', color: '#8ea3b8', fontSize: '11px' } }, session.title),
+            h('td', { style: { padding: '3px 6px', textAlign: 'right', fontSize: '11px' } }, formatCost(session.cost, currency)),
+            h('td', { style: { padding: '3px 6px', textAlign: 'right', fontSize: '11px' } }, formatTokens(session.totalTokens)),
+          ))
+        }
+      }
+      return h(
+        'div',
+        { style: { display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #1e3349', paddingTop: '10px' } },
+        h('div', { style: { fontSize: '12px', fontWeight: 600 } }, t('panel.breakdown')),
+        h('div', { style: { display: 'flex', justifyContent: 'space-around', gap: '8px' } }, [donut(t('panel.byProject'), projects), donut(t('panel.bySession'), sessions)]),
+        h('table', { style: { width: '100%', borderCollapse: 'collapse', fontSize: '12px' } },
+          h('thead', null, h('tr', null,
+            h('th', { style: { textAlign: 'left', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.project')),
+            h('th', { style: { textAlign: 'right', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.cost')),
+            h('th', { style: { textAlign: 'right', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.tokens')),
+          )),
+          h('tbody', null, rows),
+        ),
+      )
+    }
+
     function UsagePanel({ t, store, sessionId }) {
       const state = useUsage(store)
       const [tab, setTab] = React.useState('cost')
@@ -876,6 +971,7 @@ window.__ModuleLoader__.load({
       }, [sessionId])
       const [hoverIndex, setHoverIndex] = React.useState(null)
       const [width, setWidth] = React.useState(320)
+      const [axisChoice, setAxisChoice] = React.useState('auto')
       const chartRef = React.useRef(null)
       React.useEffect(() => {
         store.refreshIfStale(STALE_MS)
@@ -897,6 +993,10 @@ window.__ModuleLoader__.load({
       const totals = win === undefined ? null : win.totals
       const empty = win === undefined || win.totals.requests === 0
       const metric = tab === 'cost' ? 'cost' : 'tokens'
+      const axisOptions = [0.5, 1, 1.5, 2, 5, 10, 20, 50, 100]
+      const costMax = win === undefined ? 0 : Math.max(0, ...win.buckets.map((bucket) => bucketValue(bucket, models, 'cost')))
+      const fitAxis = (value) => axisOptions.find((range) => range >= value) ?? 100
+      const chartAxisMax = fitAxis(axisChoice === 'auto' ? costMax : Math.max(Number(axisChoice), costMax))
       const statsList =
         totals === null
           ? []
@@ -979,6 +1079,22 @@ window.__ModuleLoader__.load({
             ),
           )
         }
+        if (tab === 'cost') {
+          content.push(
+            h(
+              'div',
+              { key: 'axis', style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#8ea3b8' } },
+              h('span', null, t('panel.axis')),
+              h(
+                'select',
+                { style: { background: '#132334', color: '#e7eef7', border: '1px solid #25405a', borderRadius: '6px', padding: '2px 6px', fontSize: '11px' }, value: axisChoice, onChange: (event) => setAxisChoice(event.target.value) },
+                [h('option', { key: 'auto', value: 'auto' }, t('panel.axisAuto'))].concat(
+                  axisOptions.map((range) => h('option', { key: String(range), value: String(range) }, '$' + range.toFixed(2))),
+                ),
+              ),
+            ),
+          )
+        }
         content.push(
           h(
             'div',
@@ -1012,11 +1128,15 @@ window.__ModuleLoader__.load({
                   currency,
                   width,
                   hoverIndex,
+                  axisMax: chartAxisMax,
                   label: chartTitle,
                   onHover: (index) => setHoverIndex(index),
                 }),
           ),
         )
+        if (data.breakdown !== undefined) {
+          content.push(h(Breakdown, { key: 'breakdown', t, breakdown: data.breakdown, currency }))
+        }
         content.push(
           h(
             'div',

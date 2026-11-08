@@ -214,3 +214,73 @@ export function sumUsageRecords(records, options = {}) {
   }
   return totals
 }
+
+/** Allowed Y-axis cost ranges, smallest first. */
+export const AXIS_RANGES = Object.freeze([0.5, 1, 1.5, 2, 5, 10, 20, 50, 100])
+
+/**
+ * Pick the smallest allowed Y-axis range that fits the data.
+ * @param values - bucket cost values.
+ * @returns the chosen range, never below 0.5.
+ */
+export function pickAxisMax(values) {
+  let max = 0
+  for (const value of values) if (Number.isFinite(value) && value > max) max = value
+  return AXIS_RANGES.find((range) => range >= max) ?? AXIS_RANGES[AXIS_RANGES.length - 1]
+}
+
+/**
+ * Project label for one session header.
+ * @param header - session header with `workspace`, `cwd` or `project`.
+ * @returns the last path segment, or `Unknown project`.
+ */
+export function projectOf(header) {
+  const raw = header?.workspace ?? header?.cwd ?? header?.project
+  if (typeof raw !== 'string' || raw.length === 0) return 'Unknown project'
+  const parts = raw.split(/[\\/]/).filter((part) => part.length > 0)
+  return parts.length === 0 ? raw : parts[parts.length - 1]
+}
+
+/**
+ * Group usage records by project and by session.
+ * @param records - usage records with `sessionId`.
+ * @param metaById - Map of session id to `{ header }`.
+ * @param costOf - record → cost.
+ * @returns `{ projects, sessions }`, both sorted by cost descending.
+ */
+export function sessionBreakdown(records, metaById, costOf = () => 0) {
+  const sessions = new Map()
+  for (const record of records) {
+    if (record === null || typeof record !== 'object') continue
+    const id = typeof record.sessionId === 'string' ? record.sessionId : 'unknown'
+    const meta = metaById instanceof Map ? metaById.get(id) : undefined
+    const header = meta?.header
+    const entry = sessions.get(id) ?? {
+      id,
+      title: typeof header?.title === 'string' && header.title.length > 0 ? header.title : id,
+      project: projectOf(header),
+      cost: 0,
+      totalTokens: 0,
+      requests: 0,
+    }
+    entry.cost += Number.isFinite(costOf(record)) ? costOf(record) : 0
+    entry.totalTokens += Number.isFinite(record.totalTokens) ? record.totalTokens : 0
+    entry.requests += Number.isFinite(record.requests) ? record.requests : 1
+    sessions.set(id, entry)
+  }
+  const projects = new Map()
+  for (const session of sessions.values()) {
+    const project = projects.get(session.project) ?? { name: session.project, cost: 0, totalTokens: 0, requests: 0, sessions: [] }
+    project.cost += session.cost
+    project.totalTokens += session.totalTokens
+    project.requests += session.requests
+    project.sessions.push(session)
+    projects.set(session.project, project)
+  }
+  const sortedSessions = [...sessions.values()].sort((a, b) => b.cost - a.cost || a.id.localeCompare(b.id))
+  for (const project of projects.values()) project.sessions.sort((a, b) => b.cost - a.cost || a.id.localeCompare(b.id))
+  return {
+    projects: [...projects.values()].sort((a, b) => b.cost - a.cost || a.name.localeCompare(b.name)),
+    sessions: sortedSessions,
+  }
+}

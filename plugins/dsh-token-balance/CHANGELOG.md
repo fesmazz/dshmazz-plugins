@@ -1,5 +1,16 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.2] - 2026-11-08
+
+### Added
+- Y-axis selector for the cost chart with fixed USD ranges ($0.50, $1, $1.50, $2,
+  $5, $10, $20, $50, $100); the chosen range applies to the chart and upgrades to
+  the next range when the data would not fit.
+- Consumption doughnut charts (by project and by session) below the chart, plus a
+  grouped table showing project and session cost and token totals.
+- The window response now carries a `breakdown` of projects and sessions with their
+  cost and token totals.
+
 ## [1.3.1] - 2026-11-08
 
 ### Changed
