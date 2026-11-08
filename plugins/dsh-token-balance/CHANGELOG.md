@@ -1,5 +1,36 @@
 # Changelog — @mazz/dsh-token-balance
 
+## [1.1.0] - 2026-11-07
+
+### Added
+- Hover summary above the composer dock: estimated cost and token sparklines for
+  the last 24 hours, with a click-through to the full panel.
+- Right-Sidebar **Usage** tab (`ctx.sidebarRightTabs`), opened by clicking the dock
+  line: Cost and Tokens views with 24 clock-aligned hourly buckets stacked by model,
+  responsive SVG bars, and a per-bar breakdown on hover.
+- The route now returns a 24-hour `window` report: per bucket and per model token
+  counts, request counts and estimated cost, plus grand totals.
+- `rates.json` editable list-price table (peak and off-peak cache-hit, cache-miss
+  and output rates; peak windows and weekdays), with a plugin-config `rates` override.
+- `ctx.sessionQuery` reads for live and persisted sessions, with a live-session
+  fallback and a per-session cache keyed by log length.
+
+### Changed
+- The dock line summarises the rolling 24-hour window
+  (`Balance … · 24h … · … tokens`) instead of per-session input/output totals.
+- Cost is estimated from official DeepSeek list prices and the peak/off-peak UTC
+  windows are applied per event; the report labels it as an estimate.
+- The client half injects `@deepseek-ai/dsh-client-ui-sidebar-right` and the package
+  version is now 1.1.0.
+
+### Known limits
+- Sessions are scanned when they are live or were created inside the 24-hour window;
+  a session archived before the window is not read.
+- Chinese public holidays are not modelled for peak pricing, so peak-hour estimates
+  on those days can be high.
+- Sparkline and panel rendering are verified in the mockup harness; the live slot
+  rendering needs a page refresh in the running profile.
+
 ## [1.0.0] - 2026-11-07
 
 ### Added

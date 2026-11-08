@@ -1,24 +1,25 @@
 {
   "name": "@mazz/dsh-token-balance",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "license": "MIT",
   "type": "module",
-  "description": "Shows DeepSeek token usage and the remaining account balance below the composer.",
+  "description": "Shows DeepSeek balance and a 24-hour cost/token usage panel with a hover summary.",
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
+    "./rates.json": "./rates.json",
     "./icon": "./icon.svg"
   },
   "files": [
     "index.js",
     "client.js",
     "src/*.js",
+    "rates.json",
     "cordis.patch.yml",
     "locale/*.json",
-    "icon.svg",
-    "CHANGELOG.md"
+    "icon.svg"
   ],
   "scripts": {
     "test": "node --test"
@@ -31,7 +32,8 @@
       "platform": "web",
       "immediately": true,
       "inject": [
-        "@deepseek-ai/dsh-client-ui-conversation"
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
       ]
     }
   }

@@ -3,21 +3,29 @@
  *
  * Serves one same-origin JSON route the Client half polls:
  *
- *   GET /dsh-token-balance?sessionId=<id>
+ *   GET /dsh-token-balance
  *
  * `balance` is read from the signed-in DeepSeek account wallet when one is
  * available (`ctx.deepseekAccount.getBalance`), otherwise from the DeepSeek
  * API `GET /user/balance` using the API key stored through the credentials
  * service (DEEPSEEK_API_KEY) or the launching process environment.
  *
- * `sessionUsage` / `globalUsage` sum provider-reported token usage from the
- * committed `assistant/message` events of the live Sessions.
+ * `window` is a clock-aligned, 24-hour usage report: per hourly bucket and per
+ * model, the provider-reported token counts, request count, and an estimated
+ * cost from the editable rate table (`rates.json`). Events come from
+ * `ctx.sessionQuery` (live and persisted sessions); when that service is not
+ * mounted the plugin falls back to the live sessions' committed events. Only
+ * sessions that are live or were created inside the window are read, so an
+ * archived session older than the window is not scanned.
  *
- * No credential ever crosses the wire: only amounts and token counts do.
+ * No credential ever crosses the wire: only amounts, token counts and model ids.
  */
 
+import fs from 'node:fs'
+
 import { normalizeAccountBalance, normalizeApiKeyBalance } from './src/balance.js'
-import { emptyUsage, sumUsage } from './src/usage.js'
+import { DEFAULT_RATES, costOfUsage, normalizeRates } from './src/pricing.js'
+import { hourlyBuckets, usageRecords } from './src/usage.js'
 
 /** Cordis plugin name. */
 export const name = 'token-balance'
@@ -29,63 +37,74 @@ const BALANCE_URL = 'https://api.deepseek.com/user/balance'
 const BALANCE_CACHE_MS = 30_000
 const BALANCE_TIMEOUT_MS = 8_000
 const API_KEY_REF = 'DEEPSEEK_API_KEY'
+const REPORT_CACHE_MS = 30_000
+const HOUR_MS = 3_600_000
+const WINDOW_HOURS = 24
+const SESSION_CACHE_LIMIT = 600
+const READ_CONCURRENCY = 4
 
 /** Client identity the account service expects; the bundled runtime version is enough. */
 const ACCOUNT_CLIENT = { version: '0.2.1-rc.5', locale: 'en', timezoneOffsetSeconds: 0 }
 
-/** @type {{ at: number, value: unknown } | undefined} */
-let balanceCache
-
-/** The live Session store, when this composition provides it. */
-function liveSessions(ctx) {
+/** The rate table: plugin config override, then `rates.json`, then built-in defaults. */
+function loadRates(config) {
+  if (config !== null && typeof config === 'object' && config.rates !== null && typeof config.rates === 'object') {
+    return normalizeRates(config.rates, 'config')
+  }
   try {
-    const sessions = ctx.get('sessions')
+    const raw = fs.readFileSync(new URL('./rates.json', import.meta.url), 'utf8')
+    return normalizeRates(JSON.parse(raw), 'rates.json')
+  } catch {
+    return normalizeRates(DEFAULT_RATES, 'defaults')
+  }
+}
+
+/** Optional service lookup that never throws for an absent service. */
+function service(ctx, name) {
+  try {
+    return ctx.get(name)
+  } catch {
+    return undefined
+  }
+}
+
+function liveSessions(ctx) {
+  const sessions = service(ctx, 'sessions')
+  try {
     return sessions !== undefined && typeof sessions.list === 'function' ? sessions.list() : []
   } catch {
     return []
   }
 }
 
+function liveSession(ctx, sessionId) {
+  const sessions = service(ctx, 'sessions')
+  try {
+    return sessions !== undefined && typeof sessions.get === 'function' ? sessions.get(sessionId) : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function sessionIdOf(session) {
-  const id = session.id ?? session.header?.id
+  const id = session?.id ?? session?.header?.id
   return typeof id === 'string' ? id : undefined
 }
 
-/** Committed events of a live Session, or an empty list when unreadable. */
-function eventsOf(session) {
+/** The current log length of a live session, or undefined when it cannot be read. */
+function liveSeqOf(session) {
   try {
-    return typeof session.snapshotEvents === 'function' ? session.snapshotEvents() : []
+    const seq = session?.seq
+    return typeof seq === 'number' && Number.isFinite(seq) ? seq : undefined
   } catch {
-    return []
+    return undefined
   }
-}
-
-function sessionUsage(ctx, sessionId) {
-  for (const session of liveSessions(ctx)) {
-    if (sessionIdOf(session) !== sessionId) continue
-    return sumUsage(eventsOf(session))
-  }
-  return undefined
-}
-
-function globalUsage(ctx) {
-  const total = emptyUsage()
-  for (const session of liveSessions(ctx)) {
-    const usage = sumUsage(eventsOf(session))
-    total.inputTokens += usage.inputTokens
-    total.outputTokens += usage.outputTokens
-    total.cacheReadTokens += usage.cacheReadTokens
-    total.cacheWriteTokens += usage.cacheWriteTokens
-    total.totalTokens += usage.totalTokens
-    total.requests += usage.requests
-  }
-  return total
 }
 
 /** Signed-in DeepSeek account wallet balance, when an account grant is present. */
 async function accountBalance(ctx) {
   try {
-    const account = ctx.get('deepseekAccount')
+    const account = service(ctx, 'deepseekAccount')
     if (account === undefined || typeof account.getBalance !== 'function') return undefined
     return normalizeAccountBalance(await account.getBalance(ACCOUNT_CLIENT))
   } catch {
@@ -96,7 +115,7 @@ async function accountBalance(ctx) {
 /** The stored DeepSeek API key, or undefined when none is configured. */
 async function apiKeyOf(ctx) {
   try {
-    const credentials = ctx.get('credentials')
+    const credentials = service(ctx, 'credentials')
     if (credentials !== undefined && typeof credentials.resolve === 'function') {
       const hit = await credentials.resolve(API_KEY_REF)
       if (hit !== undefined && typeof hit.value === 'string' && hit.value.length > 0) return hit.value
@@ -124,22 +143,164 @@ async function apiKeyBalance(ctx) {
   }
 }
 
-/** Fetch and normalize the balance; cached briefly. */
-async function readBalance(ctx) {
-  const now = Date.now()
-  if (balanceCache !== undefined && now - balanceCache.at < BALANCE_CACHE_MS) return balanceCache.value
-  const account = await accountBalance(ctx)
-  const value = account ?? (await apiKeyBalance(ctx))
-  balanceCache = { at: now, value }
-  return value
-}
-
 function writeJson(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
   res.end(JSON.stringify(body))
 }
 
-export function apply(ctx) {
+/** Split a list into chunks, for bounded-concurrency session reads. */
+function chunks(list, size) {
+  const result = []
+  for (let index = 0; index < list.length; index += size) result.push(list.slice(index, index + size))
+  return result
+}
+
+export function apply(ctx, config = {}) {
+  const rates = loadRates(config)
+  const cache = {
+    balance: { at: 0, value: undefined, ready: false },
+    report: { at: 0, value: undefined, pending: undefined },
+    sessions: new Map(),
+  }
+
+  /** Fetch and normalize the balance; cached briefly. */
+  async function readBalance() {
+    const now = Date.now()
+    if (cache.balance.ready && now - cache.balance.at < BALANCE_CACHE_MS) return cache.balance.value
+    const account = await accountBalance(ctx)
+    const value = account ?? (await apiKeyBalance(ctx))
+    cache.balance = { at: now, value, ready: true }
+    return value
+  }
+
+  /**
+   * One session's usage records, read once for persisted sessions and re-read
+   * only when a live session's log grows.
+   */
+  async function sessionUsage(query, candidate, windowStart) {
+    const cached = cache.sessions.get(candidate.id)
+    if (cached !== undefined) {
+      if (!candidate.live && cached.complete) return cached.usage
+      if (candidate.live) {
+        const seq = liveSeqOf(liveSession(ctx, candidate.id) ?? candidate.session)
+        if (cached.complete === false && seq !== undefined && cached.seq === seq) return cached.usage
+      }
+    }
+    let events
+    if (query !== undefined && typeof query.readSession === 'function') {
+      const result = await query.readSession(candidate.id)
+      events = Array.isArray(result?.events) ? result.events : []
+    } else {
+      const session = liveSession(ctx, candidate.id) ?? candidate.session
+      events = typeof session?.snapshotEvents === 'function' ? session.snapshotEvents() : []
+    }
+    const usage = usageRecords(events, { from: windowStart })
+    const seq = liveSeqOf(liveSession(ctx, candidate.id) ?? candidate.session)
+    cache.sessions.set(candidate.id, { seq, complete: !candidate.live, usage })
+    return usage
+  }
+
+  /** Candidate sessions: live ones, plus persisted ones created inside the window. */
+  async function candidates(query, windowStart) {
+    if (query !== undefined && typeof query.listSessions === 'function') {
+      try {
+        const records = await query.listSessions()
+        const list = []
+        for (const record of Array.isArray(records) ? records : []) {
+          const id = record?.header?.id
+          if (typeof id !== 'string') continue
+          const createdAt = typeof record.header.createdAt === 'number' ? record.header.createdAt : 0
+          const live = record.live === true
+          if (!live && createdAt < windowStart) continue
+          list.push({ id, live, createdAt })
+        }
+        return list
+      } catch {
+        // The persistence backend failed; fall back to the live sessions below.
+      }
+    }
+    return liveSessions(ctx)
+      .map((session) => ({
+        id: sessionIdOf(session),
+        live: true,
+        session,
+      }))
+      .filter((candidate) => typeof candidate.id === 'string')
+  }
+
+  function prune(windowStart) {
+    if (cache.sessions.size <= SESSION_CACHE_LIMIT) return
+    for (const [id, entry] of cache.sessions) {
+      const newest = entry.usage.reduce((max, record) => Math.max(max, record.time), 0)
+      if (entry.complete && newest < windowStart) cache.sessions.delete(id)
+      if (cache.sessions.size <= SESSION_CACHE_LIMIT) return
+    }
+  }
+
+  async function buildReport(now) {
+    const windowStart = Math.floor(now / HOUR_MS) * HOUR_MS - (WINDOW_HOURS - 1) * HOUR_MS
+    const query = service(ctx, 'sessionQuery')
+    const list = await candidates(query, windowStart)
+    for (const group of chunks(list, READ_CONCURRENCY)) {
+      await Promise.all(
+        group.map(async (candidate) => {
+          try {
+            await sessionUsage(query, candidate, windowStart)
+          } catch {
+            // One unreadable session must not blank the whole report.
+          }
+        }),
+      )
+    }
+    const records = []
+    for (const entry of cache.sessions.values()) {
+      for (const record of entry.usage) if (record.time >= windowStart) records.push(record)
+    }
+    const window = hourlyBuckets(records, {
+      now,
+      hours: WINDOW_HOURS,
+      costOf: (record) => costOfUsage(rates, record.model, record.time, record),
+    })
+    // Keep a stable legend/stack order for the shipped models; unknown models follow by size.
+    const preferred = ['deepseek-v4-pro', 'deepseek-flash']
+    window.models.sort((a, b) => {
+      const rankA = preferred.indexOf(a.id)
+      const rankB = preferred.indexOf(b.id)
+      if (rankA !== -1 || rankB !== -1) return (rankA === -1 ? preferred.length : rankA) - (rankB === -1 ? preferred.length : rankB)
+      return b.totalTokens - a.totalTokens
+    })
+    prune(windowStart)
+    return {
+      rates: {
+        currency: rates.currency,
+        unit: rates.unit,
+        source: rates.source,
+        docs: rates.docs,
+        fetched: rates.fetched,
+      },
+      window,
+      meta: { sessionSource: query === undefined ? 'live' : 'sessionQuery', sessions: list.length },
+      updatedAt: now,
+    }
+  }
+
+  /** The 24-hour report; cached briefly and coalesced across concurrent polls. */
+  function readReport() {
+    const now = Date.now()
+    if (cache.report.value !== undefined && now - cache.report.at < REPORT_CACHE_MS) return Promise.resolve(cache.report.value)
+    if (cache.report.pending !== undefined) return cache.report.pending
+    cache.report.pending = buildReport(now)
+      .then((value) => {
+        cache.report = { at: Date.now(), value, pending: undefined }
+        return value
+      })
+      .catch((error) => {
+        cache.report.pending = undefined
+        throw error
+      })
+    return cache.report.pending
+  }
+
   ctx.effect(
     () =>
       ctx.webServer.register({
@@ -147,27 +308,8 @@ export function apply(ctx) {
         path: '/dsh-token-balance',
         handler: async (req, res) => {
           try {
-            const url = new URL(req.url ?? '/', 'http://local')
-            const sessionId = url.searchParams.get('sessionId') ?? undefined
-            const balance = await readBalance(ctx)
-            let session
-            try {
-              session = sessionId === undefined ? undefined : sessionUsage(ctx, sessionId)
-            } catch {
-              session = undefined
-            }
-            let global
-            try {
-              global = globalUsage(ctx)
-            } catch {
-              global = undefined
-            }
-            writeJson(res, 200, {
-              balance,
-              sessionUsage: session ?? null,
-              globalUsage: global ?? null,
-              updatedAt: Date.now(),
-            })
+            const [balance, report] = await Promise.all([readBalance(), readReport()])
+            writeJson(res, 200, { balance: balance ?? null, ...report })
           } catch (error) {
             writeJson(res, 500, { error: error instanceof Error ? error.message : String(error) })
           }
