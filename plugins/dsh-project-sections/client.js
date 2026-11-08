@@ -191,7 +191,8 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function ProjectsView() {
+    function ProjectsView(props) {
+      const openSession = props.openSession
       const [state, setState] = useState(null)
       const [error, setError] = useState(null)
       const [busy, setBusy] = useState(false)
@@ -358,7 +359,27 @@ window.__ModuleLoader__.load({
                             h(
                               'div',
                               { key: session.sessionId, style: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' } },
-                              h('span', { style: { flex: '1 1 160px', fontSize: 12 } }, session.title),
+                              h(
+                                'button',
+                                {
+                                  type: 'button',
+                                  onClick: () => openSession && openSession(session.sessionId),
+                                  title: 'Open this session',
+                                  style: {
+                                    flex: '1 1 160px',
+                                    fontSize: 12,
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: 0,
+                                    color: t.text,
+                                    textDecoration: 'underline',
+                                    textUnderlineOffset: 2,
+                                  },
+                                },
+                                session.title,
+                              ),
                               projectOptions(project.id).length > 0
                                 ? h(Select, {
                                     value: '',
@@ -414,15 +435,51 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots'],
       apply(ctx) {
+        const uiWorkspace = ctx.get('uiWorkspace')
+        const openSession = (sessionId) => {
+          if (uiWorkspace && typeof uiWorkspace.openSession === 'function') uiWorkspace.openSession(sessionId)
+        }
+        const layout = ctx.get('layout')
+        const openProjectsPanel = () => {
+          if (layout && typeof layout.selectPanel === 'function') layout.selectPanel('projects')
+        }
+        const ProjectsPanel = (props) => h(ProjectsView, { ...props, openSession })
+        const NewProjectAction = (props) =>
+          h(
+            'button',
+            {
+              type: 'button',
+              title: 'New project',
+              onClick: openProjectsPanel,
+              style: {
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                cursor: 'pointer',
+                background: 'none',
+                border: `1px solid ${t.border}`,
+                borderRadius: 6,
+                color: t.text,
+                padding: '4px 8px',
+                fontSize: 12,
+                whiteSpace: 'nowrap',
+              },
+            },
+            props.wide ? '＋ New project' : '＋',
+          )
+
         ctx.slots.inject('sidebar.panellist', () =>
           ctx.slots.register({ name: 'sidebar.panellist', id: 'projects', order: 5, label: 'Projects' }, ProjectsIcon),
         )
-        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'projects' }, ProjectsView))
+        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'projects' }, ProjectsPanel))
         ctx.slots.inject('settings.section', () =>
-          ctx.slots.register({ name: 'settings.section', id: 'projects', order: 25, label: 'Projects' }, ProjectsView),
+          ctx.slots.register({ name: 'settings.section', id: 'projects', order: 25, label: 'Projects' }, ProjectsPanel),
         )
         ctx.slots.inject('sidebar.session.row.leading', () =>
           ctx.slots.register({ name: 'sidebar.session.row.leading', id: 'project-mark', order: 5 }, ProjectBadge),
+        )
+        ctx.slots.inject('sidebar.footer.action', () =>
+          ctx.slots.register({ name: 'sidebar.footer.action', id: 'new-project', order: 10, label: 'New project' }, NewProjectAction),
         )
       },
     }

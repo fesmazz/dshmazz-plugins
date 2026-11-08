@@ -19,8 +19,12 @@ inside it.
 ## Surfaces
 
 - **Left-rail Projects panel** (`sidebar.panellist` → `main` key `projects`):
-  create/rename/delete projects, assign a recent session, move a session,
-  remove a session, and **drag a session onto a project to assign it**.
+  a projects browser that mimics the workspace tree — expand a project to see
+  its sessions and **click a session to open it**, plus create/rename/delete,
+  assign a recent session, move a session, remove a session, and **drag a
+  session onto a project to assign it**.
+- **Sidebar foot shortcut**: a **＋ New project** action opens the Projects
+  panel.
 - **Settings → Projects**: the same management view inside Settings.
 - **Session rows**: a small colored dot in the leading cell marks the session's
   project; it is a **drag handle** — drag it onto a project in the Projects
