@@ -6,6 +6,8 @@ window.__ModuleLoader__.load({
     const h = React.createElement
     const API = '/dsh-project-sections'
     const DRAG_TYPE = 'application/x-dsh-project-session'
+    const TAB_ID = '@fesmazz/dsh-project-sections/projects'
+    const TAB_KIND = 'project-sections-projects'
 
     const t = {
       text: 'var(--dsw-alias-label-primary, currentColor)',
@@ -433,7 +435,7 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots'],
+      inject: ['slots', 'sidebarRightTabs'],
       apply(ctx) {
         const uiWorkspace = ctx.get('uiWorkspace')
         const openSession = (sessionId) => {
@@ -480,6 +482,24 @@ window.__ModuleLoader__.load({
         )
         ctx.slots.inject('sidebar.footer.action', () =>
           ctx.slots.register({ name: 'sidebar.footer.action', id: 'new-project', order: 10, label: 'New project' }, NewProjectAction),
+        )
+
+        // Right-sidebar "Projects" tab: a persistent, always-reachable browser.
+        ctx.effect(
+          () =>
+            ctx.sidebarRightTabs.register({
+              id: TAB_ID,
+              kind: TAB_KIND,
+              title: () => 'Projects',
+            }),
+          'project-sections: projects tab type',
+        )
+        ctx.effect(
+          () =>
+            ctx.slots.inject('sidebar.right.pane.tab', () =>
+              ctx.slots.register({ name: 'sidebar.right.pane.tab', key: TAB_ID }, ProjectsPanel),
+            ),
+          'project-sections: projects tab body',
         )
       },
     }

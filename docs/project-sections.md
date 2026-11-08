@@ -18,11 +18,13 @@ inside it.
 
 ## Surfaces
 
+- **Right-sidebar Projects tab** (`sidebarRightTabs` → `sidebar.right.pane.tab`):
+  a persistent, always-reachable projects browser docked to the right sidebar —
+  expand a project to see its sessions and **click a session to open it**, plus
+  create/rename/delete, assign a recent session, move a session, remove a
+  session, and drag-to-assign.
 - **Left-rail Projects panel** (`sidebar.panellist` → `main` key `projects`):
-  a projects browser that mimics the workspace tree — expand a project to see
-  its sessions and **click a session to open it**, plus create/rename/delete,
-  assign a recent session, move a session, remove a session, and **drag a
-  session onto a project to assign it**.
+  the same browser as a full-width center panel.
 - **Sidebar foot shortcut**: a **＋ New project** action opens the Projects
   panel.
 - **Settings → Projects**: the same management view inside Settings.
