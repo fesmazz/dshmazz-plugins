@@ -1,6 +1,6 @@
 {
   "name": "@fesmazz/dsh-delegation-models",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -32,7 +32,8 @@
       "immediately": true,
       "inject": [
         "@deepseek-ai/dsh-client-ui-plugin-manager",
-        "@deepseek-ai/dsh-client-ui-sidebar-right"
+        "@deepseek-ai/dsh-client-ui-sidebar-right",
+        "@deepseek-ai/dsh-client-ui-conversation"
       ]
     }
   }

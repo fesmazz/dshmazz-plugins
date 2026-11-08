@@ -30,6 +30,7 @@ export function summarizeAgents(agents, card) {
       id: agent.id,
       name: agent.name,
       role: agent.role,
+      status: agent.status ?? null,
       provider: agent.provider ?? null,
       model: agent.model ?? null,
       usage: agent.usage,

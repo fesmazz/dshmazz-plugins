@@ -63,6 +63,17 @@ window.__ModuleLoader__.load({
       'usage.empty': 'No usage recorded yet.',
       'usage.loading': 'Loading usage…',
       'usage.note': 'From Token & Balance and live session events.',
+      'monitor.title': 'Session monitor',
+      'monitor.mode': 'Team mode',
+      'monitor.sessionProfile': 'Session profile',
+      'monitor.default': 'default',
+      'monitor.rows': 'profile rows',
+      'monitor.recent': 'Recent delegations',
+      'monitor.none': 'No delegations recorded in this session yet.',
+      'monitor.status': 'Status',
+      'monitor.refresh': 'Refresh',
+      'dock.label': 'Delegation',
+      'dock.title': 'Open the delegation monitor for this session',
       'teammates.patched': 'Teammate routing: the patched spawn_teammate accepts provider/model/effort.',
       'teammates.unpatched': 'Teammate routing: stock spawn_teammate on this build; teammate rows guide delegate_model only.',
       'teammates.native': 'Teammate routing: teammates are subagents with native model selection.',
@@ -128,6 +139,17 @@ window.__ModuleLoader__.load({
       'usage.empty': '暂无用量记录。',
       'usage.loading': '加载用量…',
       'usage.note': '来自 Token & Balance 与实时会话事件。',
+      'monitor.title': '会话监控',
+      'monitor.mode': '团队模式',
+      'monitor.sessionProfile': '会话档案',
+      'monitor.default': '默认',
+      'monitor.rows': '条档案行',
+      'monitor.recent': '最近的委派',
+      'monitor.none': '本会话尚无委派记录。',
+      'monitor.status': '状态',
+      'monitor.refresh': '刷新',
+      'dock.label': '委派',
+      'dock.title': '打开本会话的委派监控',
       'teammates.patched': '队友路由：补丁版 spawn_teammate 接受 provider/model/effort。',
       'teammates.unpatched': '队友路由：当前构建为原版 spawn_teammate；队友行仅作用于 delegate_model。',
       'teammates.native': '队友路由：队友是具备原生模型选择的子代理。',
@@ -166,6 +188,7 @@ window.__ModuleLoader__.load({
       section: { padding: '10px 12px', borderBottom: '1px solid var(--dsw-alias-border-l1, #1e3349)' },
       grow: { flex: 1 },
       panel: { padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', height: '100%', overflow: 'auto' },
+      dock: { border: '1px solid var(--dsw-alias-border-l1, #1e3349)', background: 'transparent', color: 'var(--dsw-alias-label-secondary, #b8c7d6)', borderRadius: '999px', padding: '2px 9px', fontSize: '11px', cursor: 'pointer' },
       panelRow: { display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px', padding: '7px 0', borderBottom: '1px solid var(--dsw-alias-border-l1, #1e3349)' },
       small: { fontSize: '11px', color: 'var(--dsw-alias-label-caption, #657a8f)' },
     }
@@ -229,12 +252,12 @@ window.__ModuleLoader__.load({
       return `${symbolOf(currency)}${Number(value).toFixed(2)}`
     }
 
-    function useUsage(sessionId) {
+    function useMonitor(sessionId) {
       const [state, setState] = React.useState({ status: 'loading', data: null, error: null })
       const load = React.useCallback(async () => {
         if (sessionId === undefined || sessionId === null) return
         try {
-          const data = await request(`/usage?sessionId=${encodeURIComponent(String(sessionId))}`)
+          const data = await request(`/monitor?sessionId=${encodeURIComponent(String(sessionId))}`)
           setState({ status: 'ready', data, error: null })
         } catch (error) {
           setState({ status: 'error', data: null, error: error instanceof Error ? error.message : String(error) })
@@ -244,40 +267,66 @@ window.__ModuleLoader__.load({
         let alive = true
         const run = async () => { if (alive) await load() }
         run()
-        const timer = setInterval(run, 20_000)
+        const timer = setInterval(run, 15_000)
         return () => { alive = false; clearInterval(timer) }
       }, [load])
-      return state
+      return [state, load]
     }
 
     function UsageSection(props) {
       const t = props.t
-      const state = useUsage(props.sessionId)
+      const [state, reload] = useMonitor(props.sessionId)
       if (state.status === 'loading') return h('div', { style: S.note }, t('usage.loading'))
-      if (state.status === 'error') return h('div', { style: S.error }, state.error ?? '')
+      if (state.status === 'error') {
+        return h('div', { style: S.rowFlex },
+          h('span', { style: S.error }, state.error ?? ''),
+          h('button', { style: S.button, onClick: reload }, t('common.retry')),
+        )
+      }
       const data = state.data
       if (data === null) return null
       const currency = data.currency ?? data.balance?.currency ?? null
       const team = data.team ?? []
       const subagents = data.subagents ?? []
+      const enforcement = data.enforcement ?? {}
+      const recent = enforcement.delegations ?? []
       const table = (rows) => rows.length === 0
         ? h('div', { style: S.note }, t('usage.empty'))
         : h('table', { style: S.table },
             h('thead', null, h('tr', null,
               h('th', { style: S.th }, 'Agent'),
+              h('th', { style: S.th }, t('monitor.status')),
               h('th', { style: S.th }, 'Model'),
               h('th', { style: S.th }, t('usage.tokens')),
               h('th', { style: S.th }, t('usage.cost')),
             )),
             h('tbody', null, rows.map((row) => h('tr', { key: row.id },
               h('td', { style: S.td }, row.name),
+              h('td', { style: S.td }, row.status ?? '—'),
               h('td', { style: S.td }, row.model === null ? '—' : `${row.provider}/${row.model}`),
               h('td', { style: S.td }, trimTokens(row.usage?.totalTokens ?? 0)),
               h('td', { style: S.td }, money(row.cost, currency)),
             ))),
           )
       return h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } },
-        h('div', { style: { fontWeight: 600, fontSize: '12.5px' } }, t('usage.title')),
+        h('div', { style: S.rowFlex },
+          h('span', { style: { fontWeight: 600, fontSize: '12.5px' } }, t('monitor.title')),
+          h('span', { style: S.grow }),
+          h('button', { style: S.button, onClick: reload }, t('monitor.refresh')),
+        ),
+        h('div', { style: S.note },
+          `${t('monitor.mode')}: ${enforcement.teammates?.mode ?? 'unknown'}`,
+          ` · ${t('monitor.sessionProfile')}: ${enforcement.sessionProfile ?? t('monitor.default')}`,
+          ` · ${enforcement.profileRows ?? 0} ${t('monitor.rows')}`,
+        ),
+        h('div', { style: S.small }, t('monitor.recent')),
+        recent.length === 0
+          ? h('div', { style: S.note }, t('monitor.none'))
+          : h('div', { style: { display: 'flex', flexDirection: 'column', gap: '2px' } },
+              recent.slice(-3).reverse().map((entry, index) => h('div', { key: `${entry.at}-${index}`, style: S.small },
+                `${String(entry.at).slice(11, 19)} · ${entry.profile ?? `${entry.agentType ?? '?'}/${entry.taskType ?? '?'}`} → ${entry.provider}/${entry.model}${entry.reasoningEffort === null || entry.reasoningEffort === undefined ? '' : ` @ ${entry.reasoningEffort}`}`,
+              )),
+            ),
         h('div', { style: S.note },
           `${t('usage.balance')} ${data.balance === null ? '—' : money(data.balance.total, currency)}`,
           ` · ${t('usage.cost')} ${money(data.totals?.cost, currency)}`,
@@ -289,6 +338,14 @@ window.__ModuleLoader__.load({
         table(subagents),
         h('div', { style: S.note }, t('usage.note')),
       )
+    }
+
+    function DelegationDock(props) {
+      return h('button', {
+        style: S.dock,
+        title: props.t('dock.title'),
+        onClick: props.openPanel,
+      }, props.t('dock.label'))
     }
 
     function Field(props) {
@@ -826,6 +883,13 @@ window.__ModuleLoader__.load({
             (props) => h(DelegationPage, { ...props, t, openPanel }),
           )),
           'delegation-models: settings page',
+        )
+        ctx.effect(
+          () => ctx.slots.inject('conversation.composer.dock', () => ctx.slots.register(
+            { name: 'conversation.composer.dock', id: 'delegation-models', order: 3 },
+            (props) => h(DelegationDock, { ...props, t, openPanel }),
+          )),
+          'delegation-models: composer dock',
         )
         ctx.effect(
           () => ctx.sidebarRightTabs.register({ id: PANEL_ID, kind: PANEL_KIND, title: () => t('panel.title') }),

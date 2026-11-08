@@ -40,6 +40,7 @@ host registers these same-origin routes:
 | `POST /dsh-delegation-models/source` | save a `paste`/`file` auto-configure source |
 | `POST /dsh-delegation-models/parse` | LLM-parse rules into proposals (no write) |
 | `GET /dsh-delegation-models/usage` | Team/Subagent usage, cost and balance |
+| `GET /dsh-delegation-models/monitor` | live agents with status, usage and enforcement for one session |
 | `POST /dsh-delegation-models/overrides` | set or reset a session's row overrides |
 
 ## Profiles and routing
@@ -85,21 +86,30 @@ duplicate routes. Costs are estimates, never billing.
 ## Auto-configure
 
 Paste rules or choose a file; **Parse with agent** sends the text to the configured
-default route through the `llm` service, which is asked for strict JSON. Proposals
-are validated against the catalog and shown for review; applying them replaces the
-profile rows.
+default route through the `llm` service, which is asked for strict JSON. The reply
+may be an object or an array, fenced, or wrapped in prose or reasoning tags; if no
+value can be extracted, the plugin makes one repair turn and, failing that, returns
+a diagnostic excerpt. Proposals are validated against the catalog and shown for
+review; applying them replaces the profile rows.
 
 A `file` source with `autoApply` is polled; when it changes the plugin re-parses and
 re-applies it, recording `appliedAt` and `lastError`. The source path, the last
 apply and the last error are shown in the tab.
 
-## Session usage
+## Session monitor and usage
 
-`GET /usage?sessionId=` walks the live agents under the session root, classifies
+`GET /monitor?sessionId=` walks the live agents under the session root, classifies
 Team members (Lead and teammates) versus subagents, folds each session's
 `assistant/message` token usage, estimates cost with the active rate card, and
-attaches the balance from the Token & Balance plugin when that route answers. The
-sidebar panel renders the summary plus separate Team and Subagent tables.
+attaches the balance from the Token & Balance plugin when that route answers. It
+also returns the enforcement picture: the team-routing mode, the session profile,
+the row count and the recent successful delegations with the route that was applied.
+
+The panel is a live monitor (polled every 15 seconds): Team and Subagent tables with
+status, model, tokens and cost, plus the enforcement summary. Open it from a running
+session with the **Delegation** chip in the composer dock, or from Plugins →
+Delegation Models → Open session panel. `GET /usage` remains available for the
+usage-only shape.
 
 ## Teammates (V1.2)
 
@@ -119,10 +129,11 @@ builds to use the subagent path; unpatched builds to use `delegate_model`. See
 
 ## Verification
 
-- `node --test` — 50 pure tests (`src/` modules; no live harness).
+- `node --test` — 55 pure tests (`src/` modules; no live harness).
 - Live checks on the desktop host: state read/write and validation, override
-  round-trip, LLM parse of a three-rule sample, watched file re-apply, and `GET
-  /usage` with the Token & Balance summary.
+  round-trip, LLM parse of a three-rule sample (including a prose reply repaired by
+  the second turn), watched file re-apply, `GET /monitor` with Team/Subagent rows
+  and enforcement, and `GET /usage` with the Token & Balance summary.
 - Harness patch: `git apply --check` passes against `dsh-v0.2.1-rc.5`; it was not
   built because the harness dependency tree is not installed in this workspace.
 

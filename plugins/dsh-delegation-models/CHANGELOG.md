@@ -1,5 +1,20 @@
 # Changelog — @fesmazz/dsh-delegation-models
 
+## [0.3.2] - 2026-11-08
+
+### Fixed
+- V1.1.1: auto-configure parsing accepts JSON arrays, fenced replies, reasoning
+  tags and prose-wrapped values; a non-JSON first reply gets one repair turn, a
+  larger token budget, and a diagnostic snippet in the error.
+- V1.1.1: the session panel is reachable from a running session through a
+  composer dock chip and now acts as a live monitor — Team and Subagent rows with
+  status, token and cost totals, plus enforcement (team mode, session profile,
+  recent delegation routes).
+
+### Changed
+- Added `GET /monitor` (agents, usage and enforcement for one session) and a
+  recorded delegation log; the client injects the conversation UI for the dock.
+
 ## [0.3.1] - 2026-11-08
 
 ### Changed

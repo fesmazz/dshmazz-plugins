@@ -48,6 +48,9 @@ releases and repository-level changes.
 - Released [`@fesmazz/dsh-delegation-models` 0.3.1](plugins/dsh-delegation-models/CHANGELOG.md)
   — merged `main` (token-balance 1.2.0 and the `@fesmazz` rename) and renamed the
   delegation package, client module id and references; no behaviour change.
+- Released [`@fesmazz/dsh-delegation-models` 0.3.2](plugins/dsh-delegation-models/CHANGELOG.md)
+  — V1.1.1 fixes: robust auto-configure parsing, a session monitor with Team and
+  Subagent status, and a composer dock to open it from running sessions.
 
 ### Changed
 - Renamed the npm scope from `@mazz` to `@fesmazz` (the owner's handle;

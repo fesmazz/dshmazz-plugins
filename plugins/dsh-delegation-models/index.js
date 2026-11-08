@@ -21,7 +21,7 @@ import { CATALOG } from './src/catalog.js'
 import { detectTeammateRouting } from './src/capabilities.js'
 import { assertAllowed, buildCatalog, normalizeConfig, resolveRoute } from './src/policy.js'
 import { mergeProfileRow, normalizeProfiles, profileKey, profilesToPolicy } from './src/profiles.js'
-import { buildParseMessage, extractJson, normalizeParsed, PARSE_SYSTEM } from './src/parse.js'
+import { buildParseMessage, buildRepairMessage, extractJson, normalizeParsed, PARSE_SYSTEM, pickParseRoute, REPAIR_SYSTEM } from './src/parse.js'
 import { BUNDLED_RATES, validateRateCard } from './src/rates.js'
 import { summarizeAgents } from './src/report.js'
 import { createStateStore, defaultStateDirectory } from './src/state.js'
@@ -41,6 +41,9 @@ const BODY_LIMIT = 1_000_000
 
 /** Per-session state: a named profile and/or row overrides, keyed by Session id. */
 const sessionOverrides = new Map()
+
+/** Recent successful delegations per Session, for the monitor. */
+const delegationLog = new Map()
 
 function isText(value) {
   return typeof value === 'string' && value.trim().length > 0
@@ -278,6 +281,21 @@ function delegateTool(ctx, getConfig) {
         signal: exec.signal,
         delivery: 'parent',
       })
+      const sessionId = sessionIdOf(parent.session)
+      if (sessionId !== undefined) {
+        const log = delegationLog.get(sessionId) ?? []
+        log.push({
+          at: new Date().toISOString(),
+          profile: route.profile ?? null,
+          provider: route.provider,
+          model: route.model,
+          reasoningEffort: route.reasoningEffort ?? null,
+          agentType: isText(args.agent_type) ? args.agent_type : null,
+          taskType: isText(args.task_type) ? args.task_type : null,
+          childId: String(activation.childId),
+        })
+        delegationLog.set(sessionId, log.slice(-30))
+      }
       return {
         subagentId: activation.childId,
         provider: route.provider,
@@ -480,55 +498,68 @@ async function tokenBalance(ctx, sessionId) {
 /** The route used to parse rules: the default row, the first row, then the Lead default. */
 function parseRouteFor(ctx, state) {
   const defaultRow = state.defaultProfile === undefined ? undefined : state.profiles?.[state.defaultProfile]
-  const first = defaultRow ?? Object.values(state.profiles ?? {})[0]
-  if (first !== undefined && isText(first.provider) && isText(first.model)) {
-    return {
-      provider: first.provider,
-      model: first.model,
-      ...isText(first.reasoningEffort) ? { reasoningEffort: first.reasoningEffort } : {},
-    }
-  }
+  const rows = Object.values(state.profiles ?? {})
+  let current
   try {
-    const current = ctx.get('agentDefaultModel')?.currentSelection?.()
-    if (current !== undefined && isText(current.provider) && isText(current.model)) {
-      return {
-        provider: current.provider,
-        model: current.model,
-        ...typeof current.reasoningEffort === 'string' ? { reasoningEffort: current.reasoningEffort } : {},
-      }
-    }
+    current = ctx.get('agentDefaultModel')?.currentSelection?.()
   } catch {
-    // No default selection is available.
+    current = undefined
   }
-  return undefined
+  return pickParseRoute([defaultRow, ...rows].filter((row) => row !== undefined), current)
 }
 
-/** Ask the configured model to convert rules into profile rows. */
-async function parseRules(ctx, state, text, signal) {
-  const route = parseRouteFor(ctx, state)
-  if (route === undefined) throw new Error('no model route is configured for parsing; add a profile or a default model')
+/** Stream one model reply for the parser. */
+async function streamReply(ctx, route, system, message, maxTokens, signal) {
   const llm = ctx.get('llm')
   if (llm === undefined) throw new Error('the llm service is not available')
   const prepared = await llm.prepareCall({
     provider: route.provider,
     model: route.model,
     ...route.reasoningEffort === undefined ? {} : { reasoningEffort: route.reasoningEffort },
-    maxTokens: 2000,
+    maxTokens,
   }, signal)
   const chunks = prepared.stream({
     ...prepared.config,
-    system: PARSE_SYSTEM,
-    messages: [{ role: 'user', content: [{ type: 'text', text: buildParseMessage(text) }] }],
+    system,
+    messages: [{ role: 'user', content: [{ type: 'text', text: message }] }],
     signal,
   })
   let reply = ''
+  let reason
   for await (const chunk of chunks) {
     if (chunk.type === 'text-delta') reply += chunk.text
-    if (chunk.type === 'finish' && chunk.reason?.kind === 'error') {
-      throw new Error(chunk.reason.failure?.message ?? 'the model call failed')
+    if (chunk.type === 'finish') {
+      reason = chunk.reason
+      if (reason?.kind === 'error') throw new Error(reason.failure?.message ?? 'the model call failed')
     }
   }
-  return { ...normalizeParsed(extractJson(reply)), route }
+  return { reply, reason }
+}
+
+/** Ask the configured model to convert rules into profile rows, repairing a non-JSON or wrong-shape reply once. */
+async function parseRules(ctx, state, text, signal) {
+  const route = parseRouteFor(ctx, state)
+  if (route === undefined) throw new Error('no model route is configured for parsing; add a profile or a default model')
+  const first = await streamReply(ctx, route, PARSE_SYSTEM, buildParseMessage(text), 8192, signal)
+  const snippet = () => first.reply.replace(/\s+/g, ' ').slice(0, 240)
+  const repairOnce = async () => normalizeParsed(extractJson((await streamReply(ctx, route, REPAIR_SYSTEM, buildRepairMessage(first.reply), 4096, signal)).reply))
+  let result
+  let didRepair = false
+  try {
+    result = normalizeParsed(extractJson(first.reply))
+  } catch (error) {
+    if (first.reply.trim().length === 0) {
+      throw new Error(`the parser model returned no text${first.reason?.kind === 'max-tokens' ? ' (max tokens reached)' : ''}`)
+    }
+    didRepair = true
+    result = await repairOnce().catch(() => ({ ok: false, errors: [`${error.message}; first reply: ${snippet()}`], profiles: {} }))
+  }
+  if (!result.ok && !didRepair) {
+    didRepair = true
+    const repaired = await repairOnce().catch(() => undefined)
+    if (repaired !== undefined) result = repaired
+  }
+  return { ...result, route }
 }
 
 export function apply(ctx, rawConfig) {
@@ -687,6 +718,50 @@ export function apply(ctx, rawConfig) {
           currency: state.rates.currency,
           balance: token?.balance ?? null,
           ...report,
+        })
+      },
+    },
+    {
+      method: 'GET',
+      path: `${ROUTE_PREFIX}/monitor`,
+      handler: async (req, res) => {
+        const url = new URL(req.url ?? '/', 'http://local')
+        const requested = url.searchParams.get('sessionId') ?? undefined
+        const root = requested === undefined ? ctx.agents.roots()[0] : ctx.agents.get(requested)
+        if (root === undefined) {
+          writeJson(res, 404, { ok: false, errors: ['no live Session for the requested id'] })
+          return
+        }
+        const sessionId = String(root.id)
+        const agents = agentsUnder(ctx, root).map((agent) => {
+          const identity = identityOf(ctx, agent, root)
+          const route = routeOf(agent)
+          return {
+            id: String(agent.id),
+            name: identity.name,
+            role: identity.role,
+            status: agent.status ?? null,
+            provider: route.provider,
+            model: route.model,
+            usage: sumUsage(eventsOf(agent.session)),
+          }
+        })
+        const report = summarizeAgents(agents, state.rates)
+        const token = await tokenBalance(ctx, sessionId)
+        const overrides = sessionOverrides.get(sessionId)
+        writeJson(res, 200, {
+          ok: true,
+          sessionId,
+          currency: state.rates.currency,
+          balance: token?.balance ?? null,
+          ...report,
+          enforcement: {
+            teammates: teammateCapability(ctx),
+            sessionProfile: overrides?.profile ?? null,
+            sessionRows: overrides?.rows ?? {},
+            profileRows: Object.keys(state.profiles ?? {}).length,
+            delegations: delegationLog.get(sessionId) ?? [],
+          },
         })
       },
     },
