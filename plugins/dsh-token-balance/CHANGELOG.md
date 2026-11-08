@@ -1,5 +1,13 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.7] - 2026-11-08
+
+### Changed
+- Removed the small legends under the doughnuts. Slices that are large enough now
+  carry their own label with a leader line; small slices show their name only in
+  the hover overlay.
+- The two doughnuts use separate colour palettes.
+
 ## [1.3.6] - 2026-11-08
 
 ### Changed
