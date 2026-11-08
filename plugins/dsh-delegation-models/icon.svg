@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Delegation model routing">
+  <defs>
+    <linearGradient id="dm-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3aa0ff"/>
+      <stop offset="1" stop-color="#1c5fd6"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#dm-bg)"/>
+  <circle cx="32" cy="32" r="7" fill="#ffffff"/>
+  <circle cx="32" cy="13" r="5" fill="#ffffff" fill-opacity="0.9"/>
+  <circle cx="15" cy="47" r="5" fill="#ffffff" fill-opacity="0.9"/>
+  <circle cx="49" cy="47" r="5" fill="#ffffff" fill-opacity="0.9"/>
+  <path d="M32 25 V19" stroke="#ffffff" stroke-opacity="0.75" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M27 38 L20 43" stroke="#ffffff" stroke-opacity="0.75" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M37 38 L44 43" stroke="#ffffff" stroke-opacity="0.75" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

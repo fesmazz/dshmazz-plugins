@@ -1,0 +1,3 @@
+- insert:
+    - id: delegation-models
+      name: '@mazz/dsh-delegation-models'

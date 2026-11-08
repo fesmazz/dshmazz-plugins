@@ -9,6 +9,7 @@ the `@mazz/` scope.
 | Plugin | Package | What it does |
 |---|---|---|
 | Token & Balance | `@mazz/dsh-token-balance` | Shows DeepSeek token usage and the remaining account balance below the composer. |
+| Delegation Models | `@mazz/dsh-delegation-models` | Routes subagent delegations through named model profiles so a requested model is applied instead of inherited. [Configuration](docs/delegation-models.md). |
 
 ## Install
 
@@ -28,6 +29,7 @@ load its client module.
   `dsh.bundle.patch` and optional `dsh.client`), `cordis.patch.yml`, host
   `index.js`, optional `client.js`, `src/`, `test/`, `locale/`, `icon.svg`.
 - `docs/adding-a-plugin.md` — how to add the next plugin.
+- `docs/delegation-models.md` — profiles and routing for the delegation plugin.
 - `AGENTS.md` — rules for agents working in this repository.
 - `pnpm-workspace.yaml` — workspace listing (`plugins/*`).
 

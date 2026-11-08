@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Delegation Models",
+    "description": "Routes subagent delegations through named model profiles so a requested model is applied instead of inherited."
+  }
+}
