@@ -42,6 +42,9 @@ window.__ModuleLoader__.load({
       'source.auto': 'Re-apply when the source changes',
       'source.saved': 'Source saved.',
       'source.parsePending': 'Agent parsing lands in the next build step.',
+      'source.parsing': 'Parsing…',
+      'source.apply': 'Apply profiles',
+      'source.proposals': 'Parsed proposals',
       'panel.title': 'Delegation models',
       'panel.inherit': 'Inherits the global defaults. Changes here apply to this session only.',
       'panel.override': 'Override',
@@ -98,6 +101,9 @@ window.__ModuleLoader__.load({
       'source.auto': '来源变化时重新应用',
       'source.saved': '来源已保存。',
       'source.parsePending': 'Agent 解析将在下一步实现。',
+      'source.parsing': '解析中…',
+      'source.apply': '应用档案',
+      'source.proposals': '解析结果',
       'panel.title': '委派模型',
       'panel.inherit': '继承全局默认；此处更改仅对本会话生效。',
       'panel.override': '覆盖',
@@ -527,6 +533,8 @@ window.__ModuleLoader__.load({
       const [autoApply, setAutoApply] = React.useState(data.state.source?.autoApply ?? true)
       const [message, setMessage] = React.useState(null)
       const [error, setError] = React.useState(null)
+      const [parsing, setParsing] = React.useState(false)
+      const [proposals, setProposals] = React.useState(null)
 
       React.useEffect(() => {
         setText(data.state.source?.text ?? '')
@@ -551,6 +559,38 @@ window.__ModuleLoader__.load({
         setText(await file.text())
       }
 
+      async function parse() {
+        setMessage(null)
+        setError(null)
+        setParsing(true)
+        try {
+          const result = await request('/parse', { method: 'POST', body: JSON.stringify({ text }) })
+          setProposals(result.profiles)
+          setMessage(`${t('source.proposals')}: ${Object.keys(result.profiles).length}`)
+        } catch (parseError) {
+          setError(parseError instanceof Error ? parseError.message : String(parseError))
+        } finally {
+          setParsing(false)
+        }
+      }
+
+      async function applyProposals() {
+        setMessage(null)
+        setError(null)
+        try {
+          const keys = Object.keys(proposals ?? {})
+          await request('/profiles', {
+            method: 'POST',
+            body: JSON.stringify({ profiles: proposals, defaultProfile: data.state.defaultProfile ?? keys[0] }),
+          })
+          setMessage(t('profiles.saved'))
+          setProposals(null)
+          await reload()
+        } catch (applyError) {
+          setError(applyError instanceof Error ? applyError.message : String(applyError))
+        }
+      }
+
       return h('div', { style: { display: 'flex', flexDirection: 'column', gap: '10px' } },
         h('div', null,
           h('div', { style: { fontWeight: 600 } }, t('source.title')),
@@ -566,12 +606,24 @@ window.__ModuleLoader__.load({
         h('textarea', { style: S.textarea, value: text, onChange: (event) => setText(event.target.value), placeholder: t('source.paste') }),
         h('div', { style: S.rowFlex },
           h('button', { style: { ...S.button, ...S.primary }, onClick: save }, t('source.save')),
-          h('button', { style: S.button, disabled: true, title: t('source.parsePending') }, t('source.parse')),
+          h('button', { style: S.button, disabled: parsing, onClick: parse }, parsing ? t('source.parsing') : t('source.parse')),
           h('span', { style: S.grow }),
           error === null ? null : h('span', { style: S.error }, error),
           message === null ? null : h('span', { style: S.ok }, message),
         ),
-        h('div', { style: S.note }, t('source.parsePending')),
+        proposals === null ? null : h('div', { style: S.card },
+          h('div', { style: S.section }, h('b', null, t('source.proposals'))),
+          h('table', { style: S.table },
+            h('tbody', null, Object.entries(proposals).map(([key, row]) => h('tr', { key },
+              h('td', { style: S.td }, key),
+              h('td', { style: S.td }, `${row.provider}/${row.model}${row.reasoningEffort === undefined ? '' : ` @ ${row.reasoningEffort}`}`),
+            ))),
+          ),
+          h('div', { style: { padding: '8px 12px' } },
+            h('button', { style: { ...S.button, ...S.primary }, onClick: applyProposals }, `${t('source.apply')} (${Object.keys(proposals).length})`),
+          ),
+        ),
+        h('div', { style: S.note }, t('source.sub')),
       )
     }
 

@@ -20,6 +20,7 @@
 import { CATALOG } from './src/catalog.js'
 import { assertAllowed, buildCatalog, normalizeConfig, resolveRoute } from './src/policy.js'
 import { mergeProfileRow, normalizeProfiles, profileKey, profilesToPolicy } from './src/profiles.js'
+import { buildParseMessage, extractJson, normalizeParsed, PARSE_SYSTEM } from './src/parse.js'
 import { BUNDLED_RATES, validateRateCard } from './src/rates.js'
 import { summarizeAgents } from './src/report.js'
 import { createStateStore, defaultStateDirectory } from './src/state.js'
@@ -451,6 +452,60 @@ async function tokenBalance(ctx, sessionId) {
   }
 }
 
+/** The route used to parse rules: the default row, the first row, then the Lead default. */
+function parseRouteFor(ctx, state) {
+  const defaultRow = state.defaultProfile === undefined ? undefined : state.profiles?.[state.defaultProfile]
+  const first = defaultRow ?? Object.values(state.profiles ?? {})[0]
+  if (first !== undefined && isText(first.provider) && isText(first.model)) {
+    return {
+      provider: first.provider,
+      model: first.model,
+      ...isText(first.reasoningEffort) ? { reasoningEffort: first.reasoningEffort } : {},
+    }
+  }
+  try {
+    const current = ctx.get('agentDefaultModel')?.currentSelection?.()
+    if (current !== undefined && isText(current.provider) && isText(current.model)) {
+      return {
+        provider: current.provider,
+        model: current.model,
+        ...typeof current.reasoningEffort === 'string' ? { reasoningEffort: current.reasoningEffort } : {},
+      }
+    }
+  } catch {
+    // No default selection is available.
+  }
+  return undefined
+}
+
+/** Ask the configured model to convert rules into profile rows. */
+async function parseRules(ctx, state, text, signal) {
+  const route = parseRouteFor(ctx, state)
+  if (route === undefined) throw new Error('no model route is configured for parsing; add a profile or a default model')
+  const llm = ctx.get('llm')
+  if (llm === undefined) throw new Error('the llm service is not available')
+  const prepared = await llm.prepareCall({
+    provider: route.provider,
+    model: route.model,
+    ...route.reasoningEffort === undefined ? {} : { reasoningEffort: route.reasoningEffort },
+    maxTokens: 2000,
+  }, signal)
+  const chunks = prepared.stream({
+    ...prepared.config,
+    system: PARSE_SYSTEM,
+    messages: [{ role: 'user', content: [{ type: 'text', text: buildParseMessage(text) }] }],
+    signal,
+  })
+  let reply = ''
+  for await (const chunk of chunks) {
+    if (chunk.type === 'text-delta') reply += chunk.text
+    if (chunk.type === 'finish' && chunk.reason?.kind === 'error') {
+      throw new Error(chunk.reason.failure?.message ?? 'the model call failed')
+    }
+  }
+  return { ...normalizeParsed(extractJson(reply)), route }
+}
+
 export function apply(ctx, rawConfig) {
   const store = createStateStore(defaultStateDirectory())
   let state = store.read()
@@ -576,6 +631,28 @@ export function apply(ctx, rawConfig) {
           balance: token?.balance ?? null,
           ...report,
         })
+      },
+    },
+    {
+      method: 'POST',
+      path: `${ROUTE_PREFIX}/parse`,
+      handler: async (req, res) => {
+        const body = await readJson(req)
+        const text = isText(body.text) ? body.text : state.source?.text
+        if (!isText(text)) {
+          writeJson(res, 400, { ok: false, errors: ['text is required (or save a source first)'] })
+          return
+        }
+        try {
+          const result = await parseRules(ctx, state, text, AbortSignal.timeout(60_000))
+          if (!result.ok) {
+            writeJson(res, 422, { ok: false, errors: result.errors })
+            return
+          }
+          writeJson(res, 200, { ok: true, route: result.route, profiles: result.profiles })
+        } catch (error) {
+          writeJson(res, 502, { ok: false, errors: [error instanceof Error ? error.message : String(error)] })
+        }
       },
     },
     {

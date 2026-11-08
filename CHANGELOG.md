@@ -33,6 +33,10 @@ releases and repository-level changes.
   token totals and cost from the active rate card plus the Token & Balance
   balance; the sidebar panel renders the summary and separate Team/Subagent
   tables.
+- V1.1 auto-configure parsing: `POST /parse` asks the configured default route
+  for strict JSON through the `llm` service, extracts and validates it into
+  rows, and the Auto-configure tab reviews and applies the proposals; parse
+  helpers covered by tests (43 total).
 
 ## 2026-11-07 — repository 0.2.0
 
