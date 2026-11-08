@@ -2,14 +2,14 @@
 
 A personal collection of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 plugins. One installable bundle per package under `plugins/`, each published in
-the `@mazz/` scope.
+the `@fesmazz/` scope.
 
 ## Plugins
 
 | Plugin | Package | What it does |
 |---|---|---|
-| Token & Balance | `@mazz/dsh-token-balance` | Shows DeepSeek balance, a 24-hour hover usage summary and a right-Sidebar usage panel. [Details](docs/token-balance.md). |
-| Delegation Models | `@mazz/dsh-delegation-models` | Routes subagent delegations through named model profiles so a requested model is applied instead of inherited. [Configuration](docs/delegation-models.md). |
+| Token & Balance | `@fesmazz/dsh-token-balance` | Shows DeepSeek balance, a 24-hour hover usage summary and a right-Sidebar usage panel. [Details](docs/token-balance.md). |
+| Delegation Models | `@fesmazz/dsh-delegation-models` | Routes subagent delegations through named model profiles so a requested model is applied instead of inherited. [Configuration](docs/delegation-models.md). |
 
 ## Install
 

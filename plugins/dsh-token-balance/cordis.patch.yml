@@ -1,3 +1,3 @@
 - insert:
     - id: token-balance
-      name: '@mazz/dsh-token-balance'
+      name: '@fesmazz/dsh-token-balance'

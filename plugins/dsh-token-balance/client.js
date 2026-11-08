@@ -1,10 +1,10 @@
 window.__ModuleLoader__.load({
-  id: '@mazz/dsh-token-balance',
+  id: '@fesmazz/dsh-token-balance',
   factory(require) {
     const React = require('react')
     const h = React.createElement
     const NS = 'dsh-token-balance'
-    const TYPE_ID = '@mazz/dsh-token-balance/usage'
+    const TYPE_ID = '@fesmazz/dsh-token-balance/usage'
     const KIND = 'token-balance-usage'
     const POLL_MS = 30000
     const STALE_MS = 15000

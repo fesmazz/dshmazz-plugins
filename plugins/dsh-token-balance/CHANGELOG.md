@@ -1,4 +1,11 @@
-# Changelog — @mazz/dsh-token-balance
+# Changelog — @fesmazz/dsh-token-balance
+
+## [1.2.0] - 2026-11-08
+
+### Changed
+- Renamed the package scope from `@mazz` to `@fesmazz` (the owner's handle;
+  `@mazz` belongs to someone else). No behaviour change: the client module id,
+  the sidebar tab type id and the in-package references use the new scope.
 
 ## [1.1.0] - 2026-11-08
 
@@ -55,7 +62,7 @@
 
 ### Changed
 - Moved from the `@local/` placeholder package into `dshmazz-plugins` as
-  `@mazz/dsh-token-balance`.
+  `@fesmazz/dsh-token-balance`.
 
 ### Known limits
 - Token usage covers live sessions only; archived history needs `ctx.sessionQuery`.

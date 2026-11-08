@@ -1,4 +1,10 @@
-# Changelog — @mazz/dsh-delegation-models
+# Changelog — @fesmazz/dsh-delegation-models
+
+## [0.1.1] - 2026-11-08
+
+### Changed
+- Renamed the package scope from `@mazz` to `@fesmazz` (the owner's handle;
+  `@mazz` belongs to someone else). No behaviour change.
 
 ## [0.1.0] - 2026-11-07
 

@@ -8,7 +8,7 @@ One plugin is one installable bundle directory.
 
 ```text
 plugins/dsh-<topic>/
-  package.json          # name @mazz/dsh-<topic>, dsh.bundle.patch, optional dsh.client
+  package.json          # name @fesmazz/dsh-<topic>, dsh.bundle.patch, optional dsh.client
   cordis.patch.yml      # inserts the host row: name must equal the package name
   index.js              # host half: export name, inject, apply(ctx, config)
   client.js             # optional Web UI half: window.__ModuleLoader__.load({ id, factory })
@@ -23,7 +23,7 @@ Minimum `package.json`:
 
 ```json
 {
-  "name": "@mazz/dsh-<topic>",
+  "name": "@fesmazz/dsh-<topic>",
   "version": "0.1.0",
   "private": true,
   "type": "module",

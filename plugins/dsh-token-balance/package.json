@@ -1,6 +1,6 @@
 {
-  "name": "@mazz/dsh-token-balance",
-  "version": "1.1.0",
+  "name": "@fesmazz/dsh-token-balance",
+  "version": "1.2.0",
   "private": true,
   "license": "MIT",
   "type": "module",

@@ -1,6 +1,6 @@
 # Delegation Models
 
-`@mazz/dsh-delegation-models` makes a requested delegation model stick: it routes
+`@fesmazz/dsh-delegation-models` makes a requested delegation model stick: it routes
 subagent work through named model profiles and records the profile a session was
 instructed to use.
 
@@ -26,7 +26,7 @@ allowlist and the subagent backend:
 
 ```yaml
 - id: delegation-models
-  name: '@mazz/dsh-delegation-models'
+  name: '@fesmazz/dsh-delegation-models'
   config:
     provider: spawn
     defaultProfile: cheap

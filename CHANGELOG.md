@@ -15,17 +15,22 @@ releases and repository-level changes.
   bundled snapshot and custom rate-card template, and separate Team/Subagent usage.
 - Repository rule requiring a changelog for every plugin (`AGENTS.md`).
 
+### Changed
+- Renamed the npm scope from `@mazz` to `@fesmazz` (the owner's handle;
+  `@mazz` belongs to someone else). `@fesmazz/dsh-token-balance` 1.2.0 and
+  `@fesmazz/dsh-delegation-models` 0.1.1 carry the rename.
+
 ## 2026-11-08 — repository 0.2.1
 
 ### Changed
-- `@mazz/dsh-token-balance` 1.1.0: a 24-hour usage report from session history, a
+- `@fesmazz/dsh-token-balance` 1.1.0: a 24-hour usage report from session history, a
   right-Sidebar Cost/Tokens panel, a hover sparkline summary and an editable
   list-price rate table ([changelog](plugins/dsh-token-balance/CHANGELOG.md)).
 
 ## 2026-11-07 — repository 0.2.0
 
 ### Added
-- `@mazz/dsh-delegation-models` 0.1.0: model-aware delegation tools, profile
+- `@fesmazz/dsh-delegation-models` 0.1.0: model-aware delegation tools, profile
   routing and a system-prompt policy section. See
   [its changelog](plugins/dsh-delegation-models/CHANGELOG.md).
 
@@ -37,5 +42,5 @@ releases and repository-level changes.
 ## 2026-11-07 — repository 0.1.0
 
 ### Added
-- Repository created, with `@mazz/dsh-token-balance` 1.0.0
+- Repository created, with `@fesmazz/dsh-token-balance` 1.0.0
   ([changelog](plugins/dsh-token-balance/CHANGELOG.md)).

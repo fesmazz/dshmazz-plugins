@@ -1,6 +1,6 @@
 {
-  "name": "@mazz/dsh-delegation-models",
-  "version": "0.1.0",
+  "name": "@fesmazz/dsh-delegation-models",
+  "version": "0.1.1",
   "private": true,
   "license": "MIT",
   "type": "module",
