@@ -915,7 +915,10 @@ window.__ModuleLoader__.load({
       const projects = breakdown.projects === undefined ? [] : breakdown.projects
       const sessions = breakdown.sessions === undefined ? [] : breakdown.sessions
       const categories = breakdown.categories === undefined ? [] : breakdown.categories
-      const donutSize = Math.max(120, Math.min(166, Math.floor((width - 42 - 12) / 2)))
+      const sideMargin = Math.max(12, Math.round(width * 0.06))
+      const gutter = Math.max(16, Math.round(width * 0.15))
+      const donutSize = Math.max(96, Math.floor((width - sideMargin * 2 - gutter) / 2))
+      const donutBand = Math.max(10, Math.round(donutSize * 0.08))
       const palette = ['#3aa0ff', '#f5a623', '#3fbf7f', '#c084fc', '#ff6464', '#5ac8fa', '#e879f9']
       const compact = (rows) => {
         if (rows.length <= 6) return rows
@@ -926,10 +929,9 @@ window.__ModuleLoader__.load({
       const [hover, setHover] = React.useState(null)
       const projectPalette = ['#3aa0ff', '#3fbf7f', '#c084fc', '#5ac8fa', '#8ea3b8', '#e879f9', '#7fd1ff']
       const categoryPalette = ['#f5a623', '#ff6464', '#e879f9', '#3fbf7f', '#5ac8fa', '#fbbf24', '#a78bfa']
-      const donut = (label, rows, palette, size) => {
+      const donut = (label, rows, palette, size, band) => {
         const data = compact(rows)
         const total = data.reduce((sum, row) => sum + row.cost, 0)
-        const band = Math.max(10, Math.round((size * 19) / 166))
         const center = size / 2
         const radius = center - 2 - band / 2
         const circumference = 2 * Math.PI * radius
@@ -996,7 +998,7 @@ window.__ModuleLoader__.load({
         'div',
         { style: { display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #1e3349', paddingTop: '10px' } },
         h('div', { style: { fontSize: '12px', fontWeight: 600 } }, t('panel.breakdown')),
-        h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '12px', padding: '0 21px' } }, [donut(t('panel.byProject'), projects, projectPalette, donutSize), donut(t('panel.byKind'), categories.map((category) => ({ ...category, name: t('kind.' + category.name) })), categoryPalette, donutSize)]),
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: gutter + 'px', padding: '0 ' + sideMargin + 'px' } }, [donut(t('panel.byProject'), projects, projectPalette, donutSize, donutBand), donut(t('panel.byKind'), categories.map((category) => ({ ...category, name: t('kind.' + category.name) })), categoryPalette, donutSize, donutBand)]),
         h('table', { style: { width: '100%', borderCollapse: 'collapse', fontSize: '12px' } },
           h('thead', null, h('tr', null,
             h('th', { style: { textAlign: 'left', padding: '4px 6px', fontSize: '10px', color: '#657a8f', textTransform: 'uppercase' } }, t('panel.project')),

@@ -1,5 +1,13 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.9] - 2026-11-08
+
+### Fixed
+- The doughnut pair now scales with the pane width instead of capping at 166px:
+  ring size, gap and side margins are derived from the measured panel width, so
+  widening the pane enlarges the rings and keeps the layout proportional. The band
+  stays at ~8% of the ring diameter, matching the approved concept.
+
 ## [1.3.8] - 2026-11-08
 
 ### Changed
