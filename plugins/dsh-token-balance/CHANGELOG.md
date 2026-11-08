@@ -1,5 +1,24 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.0] - 2026-11-08
+
+### Added
+- The hover card compares this session with all sessions for the selected window
+  and shows the session's share of the window's cost.
+- A shared 6/12/24/48-hour range selector in the hover card, the panel header and
+  the dock summary; 48-hour charts use two-hour buckets.
+- The route accepts `hours` and `sessionId` and returns the session's totals for
+  the requested window.
+
+### Changed
+- The hover card no longer draws the ambiguous sparklines; it shows the
+  session-vs-all comparison and the percentage line.
+- Reports are cached per range and session; a longer range re-reads a session once
+  to include older events.
+
+### Fixed
+- 48-hour charts use relative time labels instead of repeating clock hours.
+
 ## [1.2.0] - 2026-11-08
 
 ### Changed

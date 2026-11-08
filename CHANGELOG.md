@@ -20,6 +20,14 @@ releases and repository-level changes.
   `@mazz` belongs to someone else). `@fesmazz/dsh-token-balance` 1.2.0 and
   `@fesmazz/dsh-delegation-models` 0.1.1 carry the rename.
 
+## 2026-11-08 — repository 0.2.2
+
+### Changed
+- `@fesmazz/dsh-token-balance` 1.3.0: the hover card compares this session with all
+  sessions, a shared 6/12/24/48-hour range drives the card, panel and dock summary,
+  and 48-hour charts use two-hour buckets
+  ([changelog](plugins/dsh-token-balance/CHANGELOG.md)).
+
 ## 2026-11-08 — repository 0.2.1
 
 ### Changed

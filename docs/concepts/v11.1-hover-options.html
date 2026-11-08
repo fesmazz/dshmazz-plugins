@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hover card options — Token & Balance</title>
+<style>
+  :root {
+    --bg: #151517;
+    --card: #303136;
+    --primary: #f9fafb;
+    --secondary: #cfd3d6;
+    --tertiary: #adb2b8;
+    --caption: #81858c;
+    --border: rgba(255,255,255,.07);
+    --blue: #5686fe;
+    --amber: #f7ad31;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--secondary); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+  .board { width: 1120px; height: 480px; padding: 32px 40px; }
+  h1 { font-size: 18px; color: var(--primary); margin: 0 0 6px; font-weight: 600; }
+  .lead { font-size: 12px; color: var(--caption); margin: 0 0 22px; max-width: 960px; line-height: 18px; }
+  .cols { display: flex; gap: 24px; align-items: flex-start; }
+  .option { width: 300px; flex: none; }
+  .option h2 { font-size: 12px; color: var(--secondary); margin: 0 0 3px; font-weight: 600; }
+  .option p { font-size: 10.5px; color: var(--caption); margin: 0 0 10px; line-height: 15px; min-height: 31px; }
+  .badge { display: inline-block; font-size: 9px; font-weight: 600; color: #151517; background: #f1f3f5; border-radius: 999px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px; }
+  .card {
+    width: 300px; background: var(--card); border-radius: 16px; padding: 12px;
+    box-shadow: 0 0 0 .5px rgba(255,255,255,.14), 0 18px 60px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.35);
+    font-size: 12px; line-height: 18px; color: var(--secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .title { color: var(--primary); font-size: 13px; font-weight: 600; }
+  .cap { color: var(--caption); font-size: 11px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 5px; }
+  .lbl { color: var(--caption); font-size: 11px; }
+  .val { color: var(--primary); font-size: 13px; font-weight: 600; }
+  .spark {
+    position: relative; display: flex; align-items: flex-end; gap: 2px;
+    height: 32px; margin-top: 4px; padding-bottom: 1px;
+    border-bottom: 1px solid var(--border);
+  }
+  .spark .col { flex: 1 1 0; min-width: 2px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+  .spark .bar { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+  .spark .seg { width: 100%; }
+  .axis { display: flex; justify-content: space-between; color: var(--caption); font-size: 9px; margin-top: 4px; }
+  .legend { display: flex; align-items: center; gap: 12px; color: var(--tertiary); font-size: 9.5px; margin-top: 4px; }
+  .legend i { display: inline-block; width: 6px; height: 6px; border-radius: 2px; margin-right: 4px; }
+  .legend .hourly { margin-left: auto; color: var(--caption); }
+  .foot {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; padding-top: 8px; border-top: .5px solid var(--border);
+    color: var(--caption); font-size: 11px;
+  }
+  .foot .arrow { color: var(--tertiary); font-size: 13px; }
+  .table { margin-top: 8px; }
+  .thead {
+    display: grid; grid-template-columns: 1fr 84px 84px; gap: 6px;
+    color: var(--caption); font-size: 9.5px; text-align: right;
+    padding-bottom: 4px; border-bottom: .5px solid var(--border);
+  }
+  .thead .l { text-align: left; }
+  .trow {
+    display: grid; grid-template-columns: 1fr 84px 84px; gap: 6px;
+    margin-top: 6px; align-items: baseline;
+  }
+  .trow .l { color: var(--secondary); font-size: 11px; }
+  .trow .v { color: var(--primary); font-size: 12px; font-weight: 600; text-align: right; }
+  .note { color: var(--caption); font-size: 9.5px; margin-top: 9px; line-height: 14px; }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1>Hover card — three options</h1>
+  <p class="lead">The current card has one 24-hour sparkline per row: 24 hourly buckets, stacked by model. The two clusters are morning and evening usage; the gap is midday with no usage. Without a baseline or time axis it reads as two unrelated charts — that is what we need to fix.</p>
+  <div class="cols">
+
+    <div class="option">
+      <h2>A · Remove the charts</h2>
+      <p>Fastest read; nothing to decode. The panel keeps the full charts.</p>
+      <div class="card">
+        <div class="head"><span class="title">Usage</span><span class="cap">Last 24 hours</span></div>
+        <div class="row"><span class="lbl">Est. cost</span><span class="val">$20.64</span></div>
+        <div class="row"><span class="lbl">Tokens</span><span class="val">1.96B</span></div>
+        <div class="row"><span class="lbl">API requests</span><span class="val">7,594</span></div>
+        <div class="foot"><span>Open usage panel</span><span class="arrow">→</span></div>
+      </div>
+    </div>
+
+    <div class="option">
+      <h2>B · Make the 24h timeline explicit</h2>
+      <p>Same data, but with a baseline, time axis and model legend.</p>
+      <div class="card">
+        <div class="head"><span class="title">Usage</span><span class="cap">Last 24 hours</span></div>
+        <div class="row"><span class="lbl">Est. cost</span><span class="val">$20.64</span></div>
+        <div class="spark" data-series="cost"></div>
+        <div class="row"><span class="lbl">Tokens</span><span class="val">1.96B</span></div>
+        <div class="spark" data-series="tokens"></div>
+        <div class="axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>Now</span></div>
+        <div class="legend">
+          <span><i style="background:#5686fe"></i>v4-pro</span>
+          <span><i style="background:#f7ad31"></i>flash</span>
+          <span class="hourly">hourly</span>
+        </div>
+        <div class="foot"><span>Open usage panel</span><span class="arrow">→</span></div>
+      </div>
+    </div>
+
+    <div class="option">
+      <h2>C · Session vs 24h total <span class="badge">Recommended</span></h2>
+      <p>Answers “how much of the 24h total came from this session?”</p>
+      <div class="card">
+        <div class="head"><span class="title">Usage</span><span class="cap">Last 24 hours</span></div>
+        <div class="table">
+          <div class="thead"><span class="l"></span><span>This session</span><span>All sessions</span></div>
+          <div class="trow"><span class="l">Est. cost</span><span class="v">$0.64</span><span class="v">$20.64</span></div>
+          <div class="trow"><span class="l">Tokens</span><span class="v">86.2M</span><span class="v">1.96B</span></div>
+          <div class="trow"><span class="l">API requests</span><span class="v">214</span><span class="v">7,594</span></div>
+        </div>
+        <div class="note">This session is about 3% of the 24-hour cost.</div>
+        <div class="foot"><span>Open usage panel</span><span class="arrow">→</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+(function () {
+  var costPro = [0.02,0.03,0.04,0.02,0,0.01,0.03,0.01,0,0,0,0,0,0,0,0.01,0.09,0.12,0.15,0.18,0.13,0.06,0.03,0.01];
+  var costFlash = [0.03,0.05,0.07,0.05,0,0.03,0.05,0.02,0,0,0,0,0,0,0,0.02,0.16,0.22,0.28,0.34,0.24,0.11,0.06,0.02];
+  var tokensPro = [3,5,7,4,0,2,4,2,0,0,0,0,0,0,0,2,18,24,29,35,26,11,6,2];
+  var tokensFlash = [5,9,12,14,2,16,12,6,0,0,0,0,0,0,0,3,10,10,10,14,17,17,13,7];
+
+  function draw(selector, pro, flash) {
+    var host = document.querySelector(selector);
+    if (!host) return;
+    var max = 0;
+    for (var index = 0; index < 24; index += 1) {
+      max = Math.max(max, pro[index] + flash[index]);
+    }
+    for (var bucket = 0; bucket < 24; bucket += 1) {
+      var col = document.createElement('div');
+      col.className = 'col';
+      var total = pro[bucket] + flash[bucket];
+      var bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.height = max > 0 ? ((total / max) * 100) + '%' : '0%';
+      if (total > 0) {
+        var flashSeg = document.createElement('div');
+        flashSeg.className = 'seg';
+        flashSeg.style.height = ((flash[bucket] / total) * 100) + '%';
+        flashSeg.style.background = '#f7ad31';
+        var proSeg = document.createElement('div');
+        proSeg.className = 'seg';
+        proSeg.style.height = ((pro[bucket] / total) * 100) + '%';
+        proSeg.style.background = '#5686fe';
+        bar.appendChild(flashSeg);
+        bar.appendChild(proSeg);
+      }
+      col.appendChild(bar);
+      host.appendChild(col);
+    }
+  }
+
+  draw('[data-series="cost"]', costPro, costFlash);
+  draw('[data-series="tokens"]', tokensPro, tokensFlash);
+})();
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { hourlyBuckets, usageRecords } from '../src/usage.js'
+import { hourlyBuckets, sumUsageRecords, usageRecords } from '../src/usage.js'
 
 const HOUR = 3_600_000
 const NOW = Date.UTC(2026, 10, 8, 12, 30) // 2026-11-08 12:30 UTC
@@ -93,4 +93,30 @@ test('hourlyBuckets on an empty record set still returns 24 zero buckets', () =>
   assert.equal(report.models.length, 0)
   assert.equal(report.totals.requests, 0)
   assert.equal(report.totals.cost, 0)
+})
+
+test('hourlyBuckets supports 6 hours and 48 hours at two-hour buckets', () => {
+  const six = hourlyBuckets([], { now: NOW, hours: 6 })
+  assert.equal(six.hours, 6)
+  assert.equal(six.buckets.length, 6)
+  assert.equal(six.bucketMs, HOUR)
+  assert.equal(six.start, Date.UTC(2026, 10, 8, 7, 0))
+  const long = hourlyBuckets([], { now: NOW, hours: 48, bucketMs: 2 * HOUR })
+  assert.equal(long.hours, 48)
+  assert.equal(long.buckets.length, 24)
+  assert.equal(long.bucketMs, 2 * HOUR)
+  assert.equal(long.start, Date.UTC(2026, 10, 6, 14, 0))
+})
+
+test('sumUsageRecords totals a session slice and applies the cost callback', () => {
+  const totals = sumUsageRecords(usageRecords([
+    event(NOW - HOUR, 'deepseek-flash', { inputTokens: 10, outputTokens: 2, cacheReadTokens: 100 }),
+    event(NOW - 2 * HOUR, 'deepseek-v4-pro', { inputTokens: 5, outputTokens: 1, totalTokens: 6 }),
+  ]), { costOf: (record) => record.totalTokens })
+  assert.equal(totals.requests, 2)
+  assert.equal(totals.inputTokens, 15)
+  assert.equal(totals.outputTokens, 3)
+  assert.equal(totals.cacheReadTokens, 100)
+  assert.equal(totals.totalTokens, 118)
+  assert.equal(totals.cost, 118)
 })

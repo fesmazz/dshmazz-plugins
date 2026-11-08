@@ -8,7 +8,7 @@ the `@fesmazz/` scope.
 
 | Plugin | Package | What it does |
 |---|---|---|
-| Token & Balance | `@fesmazz/dsh-token-balance` | Shows DeepSeek balance, a 24-hour hover usage summary and a right-Sidebar usage panel. [Details](docs/token-balance.md). |
+| Token & Balance | `@fesmazz/dsh-token-balance` | Shows DeepSeek balance, a 6/12/24/48-hour session-vs-all hover comparison and a right-Sidebar usage panel. [Details](docs/token-balance.md). |
 | Delegation Models | `@fesmazz/dsh-delegation-models` | Routes subagent delegations through named model profiles so a requested model is applied instead of inherited. [Configuration](docs/delegation-models.md). |
 
 ## Install

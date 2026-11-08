@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hover card — range control</title>
+<style>
+  :root {
+    --bg: #151517;
+    --card: #303136;
+    --primary: #f9fafb;
+    --secondary: #cfd3d6;
+    --tertiary: #adb2b8;
+    --caption: #81858c;
+    --border: rgba(255,255,255,.07);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--secondary); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+  .board { width: 760px; padding: 32px 40px 26px; }
+  h1 { font-size: 18px; color: var(--primary); margin: 0 0 6px; font-weight: 600; }
+  .lead { font-size: 12px; color: var(--caption); margin: 0 0 22px; line-height: 18px; }
+  .grid { display: grid; grid-template-columns: 300px 300px; gap: 24px 32px; }
+  .option h2 { font-size: 12px; color: var(--secondary); margin: 0 0 8px; font-weight: 600; }
+  .option h2 .hint { color: var(--caption); font-weight: 400; font-size: 10.5px; margin-left: 6px; }
+  .card {
+    width: 300px; background: var(--card); border-radius: 16px; padding: 12px;
+    box-shadow: 0 0 0 .5px rgba(255,255,255,.14), 0 18px 60px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.35);
+    font-size: 12px; line-height: 18px; color: var(--secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .title { color: var(--primary); font-size: 13px; font-weight: 600; }
+  .range { display: flex; gap: 2px; padding: 2px; border-radius: 7px; background: rgba(255,255,255,.06); }
+  .range button {
+    border: 0; background: transparent; font-family: inherit;
+    font-size: 10px; line-height: 14px; padding: 2px 6px; border-radius: 5px;
+    color: var(--caption); cursor: default;
+  }
+  .range button.active { background: #f1f3f5; color: #151517; font-weight: 600; }
+  .table { margin-top: 6px; }
+  .thead {
+    display: grid; grid-template-columns: 1fr 84px 84px; gap: 6px;
+    color: var(--caption); font-size: 9.5px; text-align: right;
+    padding-bottom: 4px; border-bottom: .5px solid var(--border);
+  }
+  .thead .l { text-align: left; }
+  .trow { display: grid; grid-template-columns: 1fr 84px 84px; gap: 6px; margin-top: 6px; align-items: baseline; }
+  .trow .l { color: var(--secondary); font-size: 11px; }
+  .trow .v { color: var(--primary); font-size: 12px; font-weight: 600; text-align: right; }
+  .note { color: var(--caption); font-size: 9.5px; margin-top: 10px; line-height: 14px; }
+  .foot {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; padding-top: 8px; border-top: .5px solid var(--border);
+    color: var(--caption); font-size: 11px;
+  }
+  .foot .arrow { color: var(--tertiary); font-size: 13px; }
+  .footnote { color: var(--caption); font-size: 10px; line-height: 15px; margin-top: 22px; }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1>Hover card — Option C with an adjustable window</h1>
+  <p class="lead">The range lives in the card header and replaces the static “Last 24 hours”. Clicking 6/12/24/48h keeps the card open and updates the comparison, the percentage line, the panel and the dock summary. The default stays 24h.</p>
+  <div class="grid">
+
+    <div class="option">
+      <h2>6-hour window <span class="hint">selected</span></h2>
+      <div class="card">
+        <div class="head"><span class="title">Usage</span>
+          <div class="range"><button class="active">6h</button><button>12h</button><button>24h</button><button>48h</button></div>
+        </div>
+        <div class="table">
+          <div class="thead"><span class="l"></span><span>This session</span><span>All sessions</span></div>
+          <div class="trow"><span class="l">Est. cost</span><span class="v">$0.21</span><span class="v">$6.42</span></div>
+          <div class="trow"><span class="l">Tokens</span><span class="v">24.8M</span><span class="v">512M</span></div>
+          <div class="trow"><span class="l">API requests</span><span class="v">64</span><span class="v">2,140</span></div>
+        </div>
+        <div class="note">This session is 3.3% of the 6-hour cost.</div>
+        <div class="foot"><span>Open usage panel</span><span class="arrow">→</span></div>
+      </div>
+    </div>
+
+    <div class="option">
+      <h2>12-hour window <span class="hint">selected</span></h2>
+      <div class="card">
+        <div class="head"><span class="title">Usage</span>
+          <div class="range"><button>6h</button><button class="active">12h</button><button>24h</button><button>48h</button></div>
+        </div>
+        <div class="table">
+          <div class="thead"><span class="l"></span><span>This session</span><span>All sessions</span></div>
+          <div class="trow"><span class="l">Est. cost</span><span class="v">$0.41</span><span class="v">$11.80</span></div>
+          <div class="trow"><span class="l">Tokens</span><span class="v">52.1M</span><span class="v">1.02B</span></div>
+          <div class="trow"><span class="l">API requests</span><span class="v">128</span><span class="v">4,120</span></div>
+        </div>
+        <div class="note">This session is 3.5% of the 12-hour cost.</div>
+        <div class="foot"><span>Open usage panel</span><span class="arrow">→</span></div>
+      </div>
+    </div>
+
+    <div class="option">
+      <h2>24-hour window <span class="hint">default</span></h2>
+      <div class="card">
+        <div class="head"><span class="title">Usage</span>
+          <div class="range"><button>6h</button><button>12h</button><button class="active">24h</button><button>48h</button></div>
+        </div>
+        <div class="table">
+          <div class="thead"><span class="l"></span><span>This session</span><span>All sessions</span></div>
+          <div class="trow"><span class="l">Est. cost</span><span class="v">$0.64</span><span class="v">$20.64</span></div>
+          <div class="trow"><span class="l">Tokens</span><span class="v">86.2M</span><span class="v">1.96B</span></div>
+          <div class="trow"><span class="l">API requests</span><span class="v">214</span><span class="v">7,594</span></div>
+        </div>
+        <div class="note">This session is 3.1% of the 24-hour cost.</div>
+        <div class="foot"><span>Open usage panel</span><span class="arrow">→</span></div>
+      </div>
+    </div>
+
+    <div class="option">
+      <h2>48-hour window <span class="hint">selected</span></h2>
+      <div class="card">
+        <div class="head"><span class="title">Usage</span>
+          <div class="range"><button>6h</button><button>12h</button><button>24h</button><button class="active">48h</button></div>
+        </div>
+        <div class="table">
+          <div class="thead"><span class="l"></span><span>This session</span><span>All sessions</span></div>
+          <div class="trow"><span class="l">Est. cost</span><span class="v">$0.92</span><span class="v">$34.12</span></div>
+          <div class="trow"><span class="l">Tokens</span><span class="v">121M</span><span class="v">3.28B</span></div>
+          <div class="trow"><span class="l">API requests</span><span class="v">310</span><span class="v">12,480</span></div>
+        </div>
+        <div class="note">This session is 2.7% of the 48-hour cost.</div>
+        <div class="foot"><span>Open usage panel</span><span class="arrow">→</span></div>
+      </div>
+    </div>
+
+  </div>
+  <p class="footnote">Range clicks stay inside the card and do not open the panel; the footer or any other area still opens it. The panel header gets the same selector and the dock summary follows the choice (e.g. <strong>6h $6.42 · 512M tokens</strong>).</p>
+</div>
+</body>
+</html>

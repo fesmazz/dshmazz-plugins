@@ -43,7 +43,7 @@ function harness(options = {}) {
   }
   apply(ctx)
   return {
-    async call() {
+    async call(url = '/dsh-token-balance') {
       let captured
       const res = {
         writeHead(status) {
@@ -53,7 +53,7 @@ function harness(options = {}) {
           captured.body = JSON.parse(body)
         },
       }
-      await handler({ url: '/dsh-token-balance' }, res)
+      await handler({ url }, res)
       return captured
     },
   }
@@ -130,6 +130,29 @@ test('one unreadable session does not blank the report', async () => {
   const result = await harness({ sessionQuery }).call()
   assert.equal(result.status, 200)
   assert.equal(result.body.window.totals.requests, 1)
+})
+
+test('the route honours range and session parameters', async () => {
+  const now = Date.now()
+  const events = [
+    message(now - 30 * 60_000, 'deepseek-flash', usage(2_000_000)),
+    message(now - 8 * HOUR, 'deepseek-flash', usage(1_000_000)),
+  ]
+  const session = { id: 's1', header: { id: 's1', createdAt: now - 9 * HOUR }, seq: events.length, snapshotEvents: () => events }
+  const app = harness({ sessions: [session], account: readyAccount() })
+  const six = await app.call('/dsh-token-balance?hours=6&sessionId=s1')
+  assert.equal(six.body.window.hours, 6)
+  assert.equal(six.body.window.buckets.length, 6)
+  assert.equal(six.body.session.requests, 1)
+  const long = await app.call('/dsh-token-balance?hours=48&sessionId=s1')
+  assert.equal(long.body.window.hours, 48)
+  assert.equal(long.body.window.buckets.length, 24)
+  assert.equal(long.body.window.bucketMs, 2 * HOUR)
+  assert.equal(long.body.session.requests, 2)
+  const fallback = await app.call('/dsh-token-balance?hours=7')
+  assert.equal(fallback.body.window.hours, 24)
+  assert.equal(fallback.body.window.buckets.length, 24)
+  assert.equal(fallback.body.session, null)
 })
 
 test('an empty history still returns a zeroed 24-hour window', async () => {

@@ -12,20 +12,24 @@ window.__ModuleLoader__.load({
     const en = {
       'dock.aria': 'Open the usage panel',
       'dock.balance': 'Balance',
-      'dock.window': '24h',
+      'dock.window': '{hours}h',
       'dock.tokens': 'tokens',
       'dock.loading': '…',
       'dock.unavailable': 'Usage unavailable',
       'dock.noKey': 'Sign in or set an API key',
       'dock.balanceError': 'Balance unavailable',
       'dock.balanceUnavailable': '—',
-      'dock.noUsage': 'No usage in 24h',
+      'dock.noUsage': 'No usage',
       'preview.title': 'Usage',
       'preview.range': 'Last 24 hours',
       'preview.cost': 'Est. cost',
       'preview.tokens': 'Tokens',
+      'preview.thisSession': 'This session',
+      'preview.allSessions': 'All sessions',
+      'preview.share': 'This session is {percent}% of the {hours}-hour cost.',
       'preview.open': 'Open usage panel',
-      'preview.empty': 'No usage in the last 24 hours',
+      'preview.empty': 'No usage in the last {hours}h.',
+      'range.label': 'Time range',
       'panel.title': 'Usage',
       'panel.range': 'Last 24 hours',
       'panel.costTab': 'Cost',
@@ -33,11 +37,13 @@ window.__ModuleLoader__.load({
       'panel.balance': 'Balance',
       'panel.costByHour': 'Cost by hour',
       'panel.tokensByHour': 'Tokens by hour',
+      'panel.costPer2h': 'Cost per 2 hours',
+      'panel.tokensPer2h': 'Tokens per 2 hours',
       'panel.hint': 'Hover a bar for details',
       'panel.foot': 'Estimated from local sessions · DeepSeek list prices',
       'panel.updated': 'Updated {when}',
       'panel.loading': 'Loading usage…',
-      'panel.empty': 'No usage in the last 24 hours',
+      'panel.empty': 'No usage in the selected window.',
       'panel.error': 'Usage data unavailable',
       'panel.retry': 'Retry',
       'stat.cost': 'Est. cost',
@@ -57,20 +63,24 @@ window.__ModuleLoader__.load({
     const zh = {
       'dock.aria': '打开用量面板',
       'dock.balance': '余额',
-      'dock.window': '24小时',
+      'dock.window': '{hours}小时',
       'dock.tokens': 'Token',
       'dock.loading': '…',
       'dock.unavailable': '用量不可用',
       'dock.noKey': '请登录或配置 API Key',
       'dock.balanceError': '余额不可用',
       'dock.balanceUnavailable': '—',
-      'dock.noUsage': '24 小时内无用量',
+      'dock.noUsage': '无用量',
       'preview.title': '用量',
       'preview.range': '最近 24 小时',
       'preview.cost': '预估费用',
       'preview.tokens': 'Token',
+      'preview.thisSession': '本次会话',
+      'preview.allSessions': '全部会话',
+      'preview.share': '本次会话占 {hours} 小时费用的 {percent}%。',
       'preview.open': '打开用量面板',
-      'preview.empty': '最近 24 小时内无用量',
+      'preview.empty': '最近 {hours} 小时内无用量。',
+      'range.label': '时间范围',
       'panel.title': '用量',
       'panel.range': '最近 24 小时',
       'panel.costTab': '费用',
@@ -78,11 +88,13 @@ window.__ModuleLoader__.load({
       'panel.balance': '余额',
       'panel.costByHour': '每小时费用',
       'panel.tokensByHour': '每小时 Token',
+      'panel.costPer2h': '每 2 小时费用',
+      'panel.tokensPer2h': '每 2 小时 Token',
       'panel.hint': '悬停柱状图查看明细',
       'panel.foot': '根据本地会话与 DeepSeek 目录价估算',
       'panel.updated': '更新于 {when}',
       'panel.loading': '正在加载用量…',
-      'panel.empty': '最近 24 小时内无用量',
+      'panel.empty': '所选时间范围内无用量。',
       'panel.error': '用量数据不可用',
       'panel.retry': '重试',
       'stat.cost': '预估费用',
@@ -211,19 +223,28 @@ window.__ModuleLoader__.load({
     }
 
     function createStore() {
-      let state = { status: 'loading', data: null, error: null, at: 0 }
+      const allowedHours = [6, 12, 24, 48]
+      let state = { status: 'loading', data: null, error: null, at: 0, hours: 24, sessionId: undefined, key: '24|' }
       const listeners = new Set()
       let timer = null
-      let pending = null
+      let requestSeq = 0
       const emit = () => {
         for (const listener of [...listeners]) listener()
       }
+      const keyOf = () => String(state.hours) + '|' + (state.sessionId === undefined ? '' : state.sessionId)
       const load = (force) => {
-        if (pending !== null) return pending
-        if (!force && state.data !== null && Date.now() - state.at < 4000) return Promise.resolve(state.data)
+        const key = keyOf()
+        if (!force && state.data !== null && state.at !== 0 && state.key === key && Date.now() - state.at < 4000) {
+          return Promise.resolve(state.data)
+        }
+        const mySeq = ++requestSeq
+        const requestHours = state.hours
+        const requestSession = state.sessionId
         state = { ...state, status: state.data === null ? 'loading' : 'refreshing' }
         emit()
-        pending = fetch('/dsh-token-balance', {
+        let url = '/dsh-token-balance?hours=' + String(requestHours)
+        if (requestSession !== undefined) url += '&sessionId=' + encodeURIComponent(String(requestSession))
+        return fetch(url, {
           headers: { accept: 'application/json' },
           cache: 'no-store',
           signal: typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(20000) : undefined,
@@ -233,19 +254,30 @@ window.__ModuleLoader__.load({
             return response.json()
           })
           .then((data) => {
-            state = { status: 'ready', data, error: null, at: Date.now() }
+            if (mySeq !== requestSeq || keyOf() !== key) return state.data
+            state = { status: 'ready', data, error: null, at: Date.now(), hours: requestHours, sessionId: requestSession, key }
             emit()
             return data
           })
           .catch((error) => {
+            if (mySeq !== requestSeq || keyOf() !== key) return state.data
             state = { ...state, status: state.data === null ? 'error' : 'stale', error: error instanceof Error ? error.message : String(error) }
             emit()
             return state.data
           })
-          .finally(() => {
-            pending = null
-          })
-        return pending
+      }
+      const setHours = (hours) => {
+        if (!allowedHours.includes(hours) || hours === state.hours) return
+        state = { ...state, hours }
+        emit()
+        load(true)
+      }
+      const setSession = (sessionId) => {
+        const next = typeof sessionId === 'string' && sessionId.length > 0 ? sessionId : undefined
+        if (next === state.sessionId) return
+        state = { ...state, sessionId: next }
+        emit()
+        load(true)
       }
       return {
         subscribe(listener) {
@@ -269,9 +301,11 @@ window.__ModuleLoader__.load({
           return load(true)
         },
         refreshIfStale(maxAgeMs) {
-          if (state.data === null || Date.now() - state.at > maxAgeMs) return load(false)
+          if (state.data === null || state.at === 0 || Date.now() - state.at > maxAgeMs) return load(false)
           return Promise.resolve(state.data)
         },
+        setHours,
+        setSession,
       }
     }
 
@@ -313,17 +347,22 @@ window.__ModuleLoader__.load({
         zIndex: 30,
         cursor: 'pointer',
       },
-      previewHead: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' },
+      previewHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' },
       previewTitle: { color: C.primary, fontSize: '13px', fontWeight: 600 },
       caption: { color: C.caption, fontSize: '11px', lineHeight: '15px' },
-      previewRow: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px', marginTop: '6px' },
-      previewValue: { color: C.primary, fontSize: '13px', fontWeight: 600 },
+      range: { display: 'flex', gap: '2px', padding: '2px', borderRadius: '7px', background: 'rgba(255,255,255,.06)' },
+      rangeButton: { border: 0, background: 'transparent', fontFamily: 'inherit', fontSize: '10px', lineHeight: '14px', padding: '2px 6px', borderRadius: '5px', color: C.caption, cursor: 'pointer' },
+      rangeButtonActive: { background: '#f1f3f5', color: '#151517', fontWeight: 600 },
       previewEmpty: { color: C.tertiary, fontSize: '12px', lineHeight: '18px', padding: '6px 0 2px' },
+      previewTable: { marginTop: '6px' },
+      previewThead: { display: 'grid', gridTemplateColumns: '1fr 84px 84px', gap: '6px', color: C.caption, fontSize: '9.5px', textAlign: 'right', paddingBottom: '4px', borderBottom: '0.5px solid ' + C.border1 },
+      previewTheadLabel: { textAlign: 'left' },
+      previewTrow: { display: 'grid', gridTemplateColumns: '1fr 84px 84px', gap: '6px', marginTop: '6px', alignItems: 'baseline' },
+      previewTrowLabel: { color: C.secondary, fontSize: '11px' },
+      previewTrowValue: { color: C.primary, fontSize: '12px', fontWeight: 600, textAlign: 'right' },
+      previewNote: { color: C.caption, fontSize: '9.5px', marginTop: '9px', lineHeight: '14px' },
       previewFoot: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', paddingTop: '8px', borderTop: '0.5px solid ' + C.border1, color: C.caption, fontSize: '11px' },
       previewArrow: { color: C.tertiary, fontSize: '13px' },
-      spark: { display: 'flex', alignItems: 'flex-end', gap: '2px', height: '24px', marginTop: '4px' },
-      sparkColumn: { display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', flex: '1 1 0', minWidth: '2px', height: '100%', borderRadius: '1.5px', overflow: 'hidden' },
-      sparkSegment: { width: '100%' },
 
       panel: {
         display: 'flex',
@@ -339,8 +378,7 @@ window.__ModuleLoader__.load({
         lineHeight: '18px',
         fontVariantNumeric: 'tabular-nums',
       },
-      panelHead: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' },
-      panelRange: { color: C.secondary, fontSize: '13px', lineHeight: '18px', fontWeight: 500 },
+      panelHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' },
       balanceChip: { display: 'flex', alignItems: 'baseline', gap: '6px', color: C.caption, fontSize: '11px', whiteSpace: 'nowrap' },
       balanceValue: { color: C.primary, fontSize: '12px', fontWeight: 600 },
       tabs: { display: 'flex', gap: '2px', padding: '2px', borderRadius: '8px', background: C.hover, alignSelf: 'flex-start' },
@@ -390,40 +428,43 @@ window.__ModuleLoader__.load({
       return React.useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)
     }
 
-    function Sparkline({ buckets, models, metric, max }) {
+    function RangePicker({ t, hours, onChange }) {
+      const values = [6, 12, 24, 48]
       return h(
         'div',
-        { style: S.spark, 'aria-hidden': true },
-        buckets.map((bucket, index) => {
-          const total = bucketValue(bucket, models, metric)
-          const height = max > 0 ? Math.max(total > 0 ? 2 : 0, Math.round((total / max) * 100)) : 0
-          return h(
-            'div',
-            { key: index, style: { ...S.sparkColumn, height: height + '%' } },
-            models
-              .map((model, modelIndex) => ({ model, modelIndex }))
-              .reverse()
-              .map((entry) => {
-                const value = modelValue(bucket, entry.model.id, metric)
-                const share = total > 0 ? (value / total) * 100 : 0
-                return h('div', {
-                  key: entry.model.id,
-                  style: { ...S.sparkSegment, height: share + '%', background: colorOf(entry.model.id, entry.modelIndex) },
-                })
-              }),
-          )
-        }),
+        { style: S.range, role: 'group', 'aria-label': t('range.label') },
+        values.map((value) =>
+          h(
+            'button',
+            {
+              key: value,
+              type: 'button',
+              style: value === hours ? { ...S.rangeButton, ...S.rangeButtonActive } : S.rangeButton,
+              'aria-pressed': value === hours,
+              onClick: (event) => {
+                event.stopPropagation()
+                onChange(value)
+              },
+              onKeyDown: (event) => {
+                event.stopPropagation()
+              },
+            },
+            String(value) + 'h',
+          ),
+        ),
       )
     }
 
-    function HoverPreview({ t, state, onOpen, onClose, anchor }) {
+    function HoverPreview({ t, state, onOpen, onClose, anchor, onRange }) {
       const data = state.data
       const win = data === null || data.window == null ? undefined : data.window
-      const buckets = win === undefined ? [] : win.buckets
-      const models = win === undefined ? [] : win.models
-      const maxCost = buckets.reduce((max, bucket) => Math.max(max, bucketValue(bucket, models, 'cost')), 0)
-      const maxTokens = buckets.reduce((max, bucket) => Math.max(max, bucketValue(bucket, models, 'tokens')), 0)
-      const empty = win === undefined || win.totals.requests === 0
+      const currency = data === null || data.rates == null ? 'USD' : data.rates.currency
+      const totals = win === undefined ? null : win.totals
+      const session = data === null ? null : data.session
+      const pending = win !== undefined && win.hours !== state.hours
+      const share = session !== null && totals !== null && totals.cost > 0 ? (session.cost / totals.cost) * 100 : null
+      const empty = win !== undefined && win.totals.requests === 0
+      const sessionValue = (read) => (session === null ? '—' : read(session))
       return h(
         'div',
         {
@@ -433,6 +474,7 @@ window.__ModuleLoader__.load({
           tabIndex: 0,
           onClick: onOpen,
           onKeyDown: (event) => {
+            if (event.target !== event.currentTarget) return
             if (event.key === 'Escape') {
               event.preventDefault()
               onClose()
@@ -446,32 +488,53 @@ window.__ModuleLoader__.load({
           'div',
           { style: S.previewHead },
           h('span', { style: S.previewTitle }, t('preview.title')),
-          h('span', { style: S.caption }, t('preview.range')),
+          h(RangePicker, { t, hours: state.hours, onChange: onRange }),
         ),
         data === null
           ? h('div', { style: S.previewEmpty }, state.status === 'error' ? t('dock.unavailable') : t('dock.loading'))
           : win === undefined
             ? h('div', { style: S.previewEmpty }, t('dock.unavailable'))
             : empty
-            ? h('div', { style: S.previewEmpty }, t('preview.empty'))
-            : h(
-                React.Fragment,
-                null,
-                h(
-                  'div',
-                  { style: S.previewRow },
-                  h('span', { style: S.caption }, t('preview.cost')),
-                  h('span', { style: S.previewValue }, formatCost(win.totals.cost, data.rates.currency)),
+              ? h('div', { style: S.previewEmpty }, t('preview.empty', { hours: win.hours }))
+              : h(
+                  React.Fragment,
+                  null,
+                  h(
+                    'div',
+                    { style: Object.assign({}, S.previewTable, pending ? { opacity: 0.55 } : null) },
+                    h(
+                      'div',
+                      { style: S.previewThead },
+                      h('span', { style: S.previewTheadLabel }),
+                      h('span', null, t('preview.thisSession')),
+                      h('span', null, t('preview.allSessions')),
+                    ),
+                    h(
+                      'div',
+                      { style: S.previewTrow },
+                      h('span', { style: S.previewTrowLabel }, t('stat.cost')),
+                      h('span', { style: S.previewTrowValue }, sessionValue((entry) => formatCost(entry.cost, currency))),
+                      h('span', { style: S.previewTrowValue }, formatCost(totals.cost, currency)),
+                    ),
+                    h(
+                      'div',
+                      { style: S.previewTrow },
+                      h('span', { style: S.previewTrowLabel }, t('stat.tokens')),
+                      h('span', { style: S.previewTrowValue }, sessionValue((entry) => formatTokens(entry.totalTokens))),
+                      h('span', { style: S.previewTrowValue }, formatTokens(totals.totalTokens)),
+                    ),
+                    h(
+                      'div',
+                      { style: S.previewTrow },
+                      h('span', { style: S.previewTrowLabel }, t('stat.requests')),
+                      h('span', { style: S.previewTrowValue }, sessionValue((entry) => formatInt(entry.requests))),
+                      h('span', { style: S.previewTrowValue }, formatInt(totals.requests)),
+                    ),
+                  ),
+                  share !== null
+                    ? h('div', { style: S.previewNote }, t('preview.share', { percent: share.toFixed(1), hours: win.hours }))
+                    : null,
                 ),
-                h(Sparkline, { buckets, models, metric: 'cost', max: maxCost }),
-                h(
-                  'div',
-                  { style: S.previewRow },
-                  h('span', { style: S.caption }, t('preview.tokens')),
-                  h('span', { style: S.previewValue }, formatTokens(win.totals.totalTokens)),
-                ),
-                h(Sparkline, { buckets, models, metric: 'tokens', max: maxTokens }),
-              ),
         h(
           'div',
           { style: S.previewFoot },
@@ -489,7 +552,8 @@ window.__ModuleLoader__.load({
       if (balance !== undefined && balance !== '') parts.push(t('dock.balance') + ' ' + balance)
       const win = data.window
       if (win != null && win.totals.requests > 0) {
-        parts.push(t('dock.window') + ' ' + formatCost(win.totals.cost, data.rates.currency))
+        const rangeHours = Number.isFinite(win.hours) ? win.hours : 24
+        parts.push(t('dock.window', { hours: rangeHours }) + ' ' + formatCost(win.totals.cost, data.rates.currency))
         parts.push(formatTokens(win.totals.totalTokens) + ' ' + t('dock.tokens'))
       } else if (win == null) {
         parts.push(t('dock.unavailable'))
@@ -499,8 +563,11 @@ window.__ModuleLoader__.load({
       return parts.join(' · ')
     }
 
-    function DockLine({ t, store, actions }) {
+    function DockLine({ t, store, actions, sessionId }) {
       const state = useUsage(store)
+      React.useEffect(() => {
+        if (sessionId !== undefined) store.setSession(sessionId)
+      }, [sessionId])
       const [open, setOpen] = React.useState(false)
       const [anchor, setAnchor] = React.useState(null)
       const buttonRef = React.useRef(null)
@@ -574,6 +641,7 @@ window.__ModuleLoader__.load({
               state,
               anchor,
               onClose: () => setOpen(false),
+              onRange: (hours) => store.setHours(hours),
               onOpen: () => {
                 setOpen(false)
                 actions.open()
@@ -631,6 +699,16 @@ window.__ModuleLoader__.load({
       const ticks = [0, max / 2, max]
       const children = []
       const axisFormat = (value) => (metric === 'cost' ? formatCost(value, currency) : formatTokens(value))
+      const firstBucket = buckets[0]
+      const lastBucket = buckets[buckets.length - 1]
+      const spanHours = firstBucket !== undefined && lastBucket !== undefined ? (lastBucket.end - firstBucket.start) / 3_600_000 : 0
+      const relativeWindow = spanHours > 24
+      const relativeRange = (bucket) => {
+        const end = lastBucket.end
+        const startBack = Math.max(0, Math.round((end - bucket.start) / 3_600_000))
+        const endBack = Math.max(0, Math.round((end - bucket.end) / 3_600_000))
+        return (startBack === 0 ? t('chart.now') : '-' + startBack + 'h') + '–' + (endBack === 0 ? t('chart.now') : '-' + endBack + 'h')
+      }
 
       ticks.forEach((tick, index) => {
         const y = yOf(tick)
@@ -712,7 +790,13 @@ window.__ModuleLoader__.load({
               fontSize: 10,
               fontFamily: C.font,
             },
-            index === buckets.length - 1 ? t('chart.now') : clockOf(buckets[index].start),
+            relativeWindow
+              ? index === buckets.length - 1
+                ? t('chart.now')
+                : '-' + Math.round((lastBucket.end - buckets[index].start) / 3_600_000) + 'h'
+              : index === buckets.length - 1
+                ? t('chart.now')
+                : clockOf(buckets[index].start),
           ),
         )
       })
@@ -748,7 +832,7 @@ window.__ModuleLoader__.load({
           h(
             'div',
             { style: S.tooltipHead },
-            h('span', { style: S.tooltipRange }, rangeOf(bucket)),
+            h('span', { style: S.tooltipRange }, relativeWindow ? relativeRange(bucket) : rangeOf(bucket)),
             h('span', null, t('tooltip.requests', { count: requests })),
           ),
           models.map((model) =>
@@ -783,9 +867,12 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function UsagePanel({ t, store }) {
+    function UsagePanel({ t, store, sessionId }) {
       const state = useUsage(store)
       const [tab, setTab] = React.useState('cost')
+      React.useEffect(() => {
+        if (sessionId !== undefined) store.setSession(sessionId)
+      }, [sessionId])
       const [hoverIndex, setHoverIndex] = React.useState(null)
       const [width, setWidth] = React.useState(320)
       const chartRef = React.useRef(null)
@@ -824,14 +911,22 @@ window.__ModuleLoader__.load({
                 [t('stat.completion'), formatTokens(totals.outputTokens)],
               ]
       const balanceText = data === null ? undefined : balanceTextOf(data.balance, t)
-      const chartTitle = tab === 'cost' ? t('panel.costByHour') : t('panel.tokensByHour')
+      const perTwoHours = win !== undefined && win.bucketMs > 3_600_000
+      const chartTitle =
+        tab === 'cost'
+          ? perTwoHours
+            ? t('panel.costPer2h')
+            : t('panel.costByHour')
+          : perTwoHours
+            ? t('panel.tokensPer2h')
+            : t('panel.tokensByHour')
 
       const content = []
       content.push(
         h(
           'div',
           { key: 'head', style: S.panelHead },
-          h('div', { style: S.panelRange }, t('panel.range')),
+          h(RangePicker, { t, hours: state.hours, onChange: (hours) => store.setHours(hours) }),
           h(
             'div',
             { style: S.balanceChip },

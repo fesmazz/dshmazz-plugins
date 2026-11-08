@@ -25,7 +25,7 @@ import fs from 'node:fs'
 
 import { normalizeAccountBalance, normalizeApiKeyBalance } from './src/balance.js'
 import { DEFAULT_RATES, costOfUsage, normalizeRates } from './src/pricing.js'
-import { hourlyBuckets, usageRecords } from './src/usage.js'
+import { hourlyBuckets, sumUsageRecords, usageRecords } from './src/usage.js'
 
 /** Cordis plugin name. */
 export const name = 'token-balance'
@@ -38,8 +38,10 @@ const BALANCE_CACHE_MS = 30_000
 const BALANCE_TIMEOUT_MS = 8_000
 const API_KEY_REF = 'DEEPSEEK_API_KEY'
 const REPORT_CACHE_MS = 30_000
+const REPORT_CACHE_LIMIT = 16
 const HOUR_MS = 3_600_000
-const WINDOW_HOURS = 24
+const RANGE_HOURS = [6, 12, 24, 48]
+const DEFAULT_RANGE_HOURS = 24
 const SESSION_CACHE_LIMIT = 600
 const READ_CONCURRENCY = 4
 
@@ -159,7 +161,7 @@ export function apply(ctx, config = {}) {
   const rates = loadRates(config)
   const cache = {
     balance: { at: 0, value: undefined, ready: false },
-    report: { at: 0, value: undefined, pending: undefined },
+    reports: new Map(),
     sessions: new Map(),
   }
 
@@ -179,7 +181,10 @@ export function apply(ctx, config = {}) {
    */
   async function sessionUsage(query, candidate, windowStart) {
     const cached = cache.sessions.get(candidate.id)
-    if (cached !== undefined) {
+    // A cached read only covers requests inside the window it was read for;
+    // a longer range re-reads that session once to pick up older events.
+    const covers = cached !== undefined && cached.from <= windowStart
+    if (covers) {
       if (!candidate.live && cached.complete) return cached.usage
       if (candidate.live) {
         const seq = liveSeqOf(liveSession(ctx, candidate.id) ?? candidate.session)
@@ -200,7 +205,7 @@ export function apply(ctx, config = {}) {
     // Cache the log length only when it did not move during the read; otherwise
     // the next poll re-reads rather than trusting a snapshot with a missing tail.
     const stableSeq = seqBefore !== undefined && seqBefore === seqAfter ? seqAfter : undefined
-    cache.sessions.set(candidate.id, { seq: stableSeq, complete: !candidate.live, usage })
+    cache.sessions.set(candidate.id, { seq: stableSeq, complete: !candidate.live, from: windowStart, usage })
     return usage
   }
 
@@ -241,8 +246,10 @@ export function apply(ctx, config = {}) {
     }
   }
 
-  async function buildReport(now) {
-    const windowStart = Math.floor(now / HOUR_MS) * HOUR_MS - (WINDOW_HOURS - 1) * HOUR_MS
+  async function buildReport(now, hours, sessionId) {
+    const bucketMs = hours === 48 ? 2 * HOUR_MS : HOUR_MS
+    const end = Math.floor(now / bucketMs) * bucketMs + bucketMs
+    const windowStart = end - hours * HOUR_MS
     const query = service(ctx, 'sessionQuery')
     const list = await candidates(query, windowStart)
     for (const group of chunks(list, READ_CONCURRENCY)) {
@@ -257,14 +264,18 @@ export function apply(ctx, config = {}) {
       )
     }
     const records = []
-    for (const entry of cache.sessions.values()) {
-      for (const record of entry.usage) if (record.time >= windowStart) records.push(record)
+    for (const [id, entry] of cache.sessions) {
+      for (const record of entry.usage) if (record.time >= windowStart) records.push({ ...record, sessionId: id })
     }
-    const window = hourlyBuckets(records, {
-      now,
-      hours: WINDOW_HOURS,
-      costOf: (record) => costOfUsage(rates, record.model, record.time, record),
-    })
+    const costOf = (record) => costOfUsage(rates, record.model, record.time, record)
+    const window = hourlyBuckets(records, { now, hours, bucketMs, costOf })
+    const session =
+      sessionId === undefined
+        ? null
+        : sumUsageRecords(
+            records.filter((record) => record.sessionId === sessionId && record.time >= windowStart && record.time < end),
+            { costOf },
+          )
     // Keep a stable legend/stack order for the shipped models; unknown models follow by size.
     const preferred = ['deepseek-v4-pro', 'deepseek-flash']
     window.models.sort((a, b) => {
@@ -283,26 +294,36 @@ export function apply(ctx, config = {}) {
         fetched: rates.fetched,
       },
       window,
+      session,
       meta: { sessionSource: query === undefined ? 'live' : 'sessionQuery', sessions: list.length },
       updatedAt: now,
     }
   }
 
-  /** The 24-hour report; cached briefly and coalesced across concurrent polls. */
-  function readReport() {
+  /** One report per requested range/session; cached briefly and coalesced per key. */
+  function readReport(hours, sessionId) {
+    const key = hours + '|' + (sessionId === undefined ? '' : sessionId)
     const now = Date.now()
-    if (cache.report.value !== undefined && now - cache.report.at < REPORT_CACHE_MS) return Promise.resolve(cache.report.value)
-    if (cache.report.pending !== undefined) return cache.report.pending
-    cache.report.pending = buildReport(now)
+    const cached = cache.reports.get(key)
+    if (cached !== undefined && cached.value !== undefined && now - cached.at < REPORT_CACHE_MS) return Promise.resolve(cached.value)
+    if (cached !== undefined && cached.pending !== undefined) return cached.pending
+    const pending = buildReport(now, hours, sessionId)
       .then((value) => {
-        cache.report = { at: Date.now(), value, pending: undefined }
+        cache.reports.set(key, { at: Date.now(), value, pending: undefined })
         return value
       })
       .catch((error) => {
-        cache.report.pending = undefined
+        cache.reports.delete(key)
         throw error
       })
-    return cache.report.pending
+    cache.reports.set(key, { at: 0, value: undefined, pending })
+    if (cache.reports.size > REPORT_CACHE_LIMIT) {
+      for (const oldest of cache.reports.keys()) {
+        if (cache.reports.size <= REPORT_CACHE_LIMIT) break
+        if (oldest !== key) cache.reports.delete(oldest)
+      }
+    }
+    return pending
   }
 
   ctx.effect(
@@ -311,7 +332,12 @@ export function apply(ctx, config = {}) {
         kind: 'exact',
         path: '/dsh-token-balance',
         handler: async (req, res) => {
-          const [balanceResult, reportResult] = await Promise.allSettled([readBalance(), readReport()])
+          const url = new URL(typeof req.url === 'string' ? req.url : '/dsh-token-balance', 'http://localhost')
+          const requestedHours = Number(url.searchParams.get('hours'))
+          const hours = RANGE_HOURS.includes(requestedHours) ? requestedHours : DEFAULT_RANGE_HOURS
+          const rawSessionId = url.searchParams.get('sessionId')
+          const sessionId = rawSessionId !== null && rawSessionId.length > 0 ? rawSessionId : undefined
+          const [balanceResult, reportResult] = await Promise.allSettled([readBalance(), readReport(hours, sessionId)])
           const errorOf = (result) => (result.reason instanceof Error ? result.reason.message : String(result.reason))
           if (balanceResult.status === 'rejected' && reportResult.status === 'rejected') {
             writeJson(res, 500, { error: errorOf(reportResult) })

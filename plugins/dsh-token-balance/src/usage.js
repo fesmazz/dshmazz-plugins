@@ -129,19 +129,20 @@ function addRecord(bucket, record, cost) {
  */
 export function hourlyBuckets(records, options = {}) {
   const now = typeof options.now === 'number' && Number.isFinite(options.now) ? options.now : Date.now()
-  const hours = Number.isInteger(options.hours) && options.hours > 0 ? options.hours : 24
+  const durationHours = Number.isInteger(options.hours) && options.hours > 0 ? options.hours : 24
   const bucketMs = Number.isInteger(options.bucketMs) && options.bucketMs > 0 ? options.bucketMs : 3_600_000
+  const bucketCount = Math.max(1, Math.round((durationHours * 3_600_000) / bucketMs))
   const costOf = typeof options.costOf === 'function' ? options.costOf : () => 0
   const end = Math.floor(now / bucketMs) * bucketMs + bucketMs
-  const start = end - hours * bucketMs
-  const buckets = Array.from({ length: hours }, (_, index) => ({
+  const start = end - durationHours * 3_600_000
+  const buckets = Array.from({ length: bucketCount }, (_, index) => ({
     start: start + index * bucketMs,
     end: start + (index + 1) * bucketMs,
     models: {},
   }))
   for (const record of records) {
     if (typeof record.time !== 'number' || record.time < start || record.time >= end) continue
-    const index = Math.min(hours - 1, Math.floor((record.time - start) / bucketMs))
+    const index = Math.min(bucketCount - 1, Math.floor((record.time - start) / bucketMs))
     addRecord(buckets[index], record, costOf(record))
   }
   const byModel = new Map()
@@ -180,5 +181,36 @@ export function hourlyBuckets(records, options = {}) {
     }),
     { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, totalTokens: 0, requests: 0, cost: 0 },
   )
-  return { start, end, bucketMs, hours, buckets, models, totals }
+  return { start, end, bucketMs, hours: durationHours, bucketCount, buckets, models, totals }
+}
+
+/**
+ * Sum a flat usage-record list (optionally already filtered to one session).
+ * @param records - usage records from {@link usageRecords}.
+ * @param options - optional `costOf` (record → cost).
+ * @returns the same totals shape as {@link hourlyBuckets}.
+ */
+export function sumUsageRecords(records, options = {}) {
+  const costOf = typeof options.costOf === 'function' ? options.costOf : () => 0
+  const totals = {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadTokens: 0,
+    cacheWriteTokens: 0,
+    totalTokens: 0,
+    requests: 0,
+    cost: 0,
+  }
+  for (const record of records) {
+    if (record === null || typeof record !== 'object') continue
+    totals.inputTokens += Number.isFinite(record.inputTokens) ? record.inputTokens : 0
+    totals.outputTokens += Number.isFinite(record.outputTokens) ? record.outputTokens : 0
+    totals.cacheReadTokens += Number.isFinite(record.cacheReadTokens) ? record.cacheReadTokens : 0
+    totals.cacheWriteTokens += Number.isFinite(record.cacheWriteTokens) ? record.cacheWriteTokens : 0
+    totals.totalTokens += Number.isFinite(record.totalTokens) ? record.totalTokens : 0
+    totals.requests += Number.isFinite(record.requests) ? record.requests : 1
+    const cost = costOf(record)
+    totals.cost += Number.isFinite(cost) ? cost : 0
+  }
+  return totals
 }
