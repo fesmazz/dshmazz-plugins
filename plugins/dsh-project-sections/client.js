@@ -127,72 +127,6 @@ window.__ModuleLoader__.load({
       )
     }
 
-    // One shared snapshot fetch (short TTL) feeds every session-row badge, so a
-    // sidebar with hundreds of rows does not issue hundreds of requests.
-    let badgeCache = null
-    let badgeAt = 0
-    let badgePromise = null
-    function loadBadgeMap() {
-      if (badgeCache && Date.now() - badgeAt < 3000) return Promise.resolve(badgeCache)
-      if (badgePromise) return badgePromise
-      badgePromise = api('GET', '/summary')
-        .then((summary) => {
-          const byProject = new Map()
-          for (const project of summary.projects || []) byProject.set(project.id, project)
-          const map = new Map()
-          for (const [sessionId, projectId] of Object.entries(summary.assignments || {})) {
-            const project = byProject.get(projectId)
-            if (project) map.set(sessionId, { projectId, name: project.name, color: project.color })
-          }
-          badgeCache = map
-          badgeAt = Date.now()
-          return map
-        })
-        .finally(() => {
-          badgePromise = null
-        })
-      return badgePromise
-    }
-
-    /** Draggable project badge on each session row; drag onto a project to assign. */
-    function ProjectBadge(props) {
-      const [assignment, setAssignment] = useState(null)
-      useEffect(() => {
-        let alive = true
-        loadBadgeMap()
-          .then((map) => {
-            if (alive) setAssignment(map.get(props.sessionId) || null)
-          })
-          .catch(() => {
-            if (alive) setAssignment(null)
-          })
-        return () => {
-          alive = false
-        }
-      }, [props.sessionId])
-
-      return h(
-        'span',
-        {
-          draggable: true,
-          title: assignment ? `${assignment.name} — drag to a project to move` : 'Drag to a project',
-          onDragStart: (e) => {
-            e.dataTransfer.setData(DRAG_TYPE, props.sessionId)
-            e.dataTransfer.setData('text/plain', props.sessionId)
-            e.dataTransfer.effectAllowed = 'move'
-          },
-          style: {
-            display: 'inline-flex',
-            alignItems: 'center',
-            cursor: 'grab',
-            width: 14,
-            height: 14,
-          },
-        },
-        assignment ? h(Dot, { color: assignment.color, size: 9 }) : h(Dot, { color: '#9ca3af', size: 7 }),
-      )
-    }
-
     function ProjectsView(props) {
       const openSession = props.openSession
       const [state, setState] = useState(null)
@@ -225,7 +159,6 @@ window.__ModuleLoader__.load({
         setError(null)
         try {
           await fn()
-          badgeCache = null
           await load()
         } catch (e) {
           setError(String((e && e.message) || e))
@@ -476,9 +409,6 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'projects' }, ProjectsPanel))
         ctx.slots.inject('settings.section', () =>
           ctx.slots.register({ name: 'settings.section', id: 'projects', order: 25, label: 'Projects' }, ProjectsPanel),
-        )
-        ctx.slots.inject('sidebar.session.row.leading', () =>
-          ctx.slots.register({ name: 'sidebar.session.row.leading', id: 'project-mark', order: 5 }, ProjectBadge),
         )
         ctx.slots.inject('sidebar.footer.action', () =>
           ctx.slots.register({ name: 'sidebar.footer.action', id: 'new-project', order: 10, label: 'New project' }, NewProjectAction),
