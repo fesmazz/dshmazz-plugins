@@ -65,7 +65,9 @@ installable bundle under `plugins/<name>/`, named `@fesmazz/dsh-<topic>`.
 ## Workflow
 
 - Follow Hundun `rules/workflow.md`, `rules/agent-model-guidelines.md`,
-  `rules/context-costs.md` and `rules/safety.md`.
+  `rules/context-costs.md`, `rules/safety.md` and `rules/cache-cleanup.md`
+  (post-work cleanup checkpoint: remove regenerable `node_modules`/build
+  output and receipt the run).
 - Work on a short-lived branch per task once a remote exists; a brand-new
   repository's initial commit may land on `main`.
 - Record milestones in Hundun: the `repositories/dshmazz-plugins/` page,
