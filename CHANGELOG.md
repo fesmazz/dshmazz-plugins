@@ -14,11 +14,49 @@ releases and repository-level changes.
   panel, file-or-paste auto-configure with re-apply on change, a Rates tab with a
   bundled snapshot and custom rate-card template, and separate Team/Subagent usage.
 - Repository rule requiring a changelog for every plugin (`AGENTS.md`).
+- Harness extension patch for 0.2.1-rc.5 under
+  [`patches/deepseek-harness/`](patches/deepseek-harness/README.md): optional
+  teammate route fields and `agentOptions` passthrough (V1.2 groundwork).
+- V1.1/V1.2 implementation plan in
+  [`docs/plans/delegation-v1.1.md`](docs/plans/delegation-v1.1.md).
+- V1.1 host foundation: bundled category catalog, bundled rate card with
+  validation and cost estimation, token-usage folding, and an atomic JSON state
+  store for profiles/rates/source; covered by 15 `node --test` cases.
+- V1.1 profile rows and host routes: agent-type × task-type rows with validation,
+  per-session row overrides, `state`/`profiles`/`rates`/`source`/`overrides`
+  routes, dynamic tool routing through rows, and profile unit tests (34 total).
+- V1.1 client half: Plugins → Delegation Models page (Profiles, Rates,
+  Auto-configure source) and a right-sidebar session override panel; manifest
+  client entry; state extras (`availableModels`, `bundledRates`, session
+  overrides) and a route method guard.
+- V1.1 session usage: `GET /usage` aggregates live Team and Subagent rows with
+  token totals and cost from the active rate card plus the Token & Balance
+  balance; the sidebar panel renders the summary and separate Team/Subagent
+  tables.
+- V1.1 auto-configure parsing: `POST /parse` asks the configured default route
+  for strict JSON through the `llm` service, extracts and validates it into
+  rows, and the Auto-configure tab reviews and applies the proposals; parse
+  helpers covered by tests (43 total).
+- V1.1 watched auto-configure: a file source with `autoApply` is polled, re-parsed
+  and re-applied when it changes, with `appliedAt`/`lastError` and the source path
+  in the state and UI; watcher covered by tests (46 total).
+- Released [`@fesmazz/dsh-delegation-models` 0.2.0](plugins/dsh-delegation-models/CHANGELOG.md)
+  — V1.1 complete plus V1.2 teammate-routing feature detection.
+- Released [`@fesmazz/dsh-delegation-models` 0.3.0](plugins/dsh-delegation-models/CHANGELOG.md)
+  — V1.2 teammate routing behind feature detection, rewritten usage documentation,
+  and a verified harness patch README.
+- Released [`@fesmazz/dsh-delegation-models` 0.3.1](plugins/dsh-delegation-models/CHANGELOG.md)
+  — merged `main` (token-balance 1.2.0 and the `@fesmazz` rename) and renamed the
+  delegation package, client module id and references; no behaviour change.
+- Released [`@fesmazz/dsh-delegation-models` 0.3.2](plugins/dsh-delegation-models/CHANGELOG.md)
+  — V1.1.1 fixes: robust auto-configure parsing, a session monitor with Team and
+  Subagent status, and a composer dock to open it from running sessions.
 
 ### Changed
 - Renamed the npm scope from `@mazz` to `@fesmazz` (the owner's handle;
   `@mazz` belongs to someone else). `@fesmazz/dsh-token-balance` 1.2.0 and
-  `@fesmazz/dsh-delegation-models` 0.1.1 carry the rename.
+  `@fesmazz/dsh-delegation-models` 0.1.1 carry the rename; this branch released
+  the delegation rename as 0.3.1 after merging the change.
 
 ## 2026-11-08 — repository 0.2.3
 

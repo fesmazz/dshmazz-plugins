@@ -1,0 +1,236 @@
+From 28e4758e349a11dd1bb99070d8c42530ca067323 Mon Sep 17 00:00:00 2001
+From: fesmazz <fernandosmazzilli@gmail.com>
+Date: Sun, 8 Nov 2026 00:15:04 -0300
+Subject: [PATCH] feat(agent-team): let spawn_teammate route child models
+
+Add optional agentOptions to SpawnTeammateRequest and optional provider/model/
+reasoning_effort to the spawn_teammate tool. The tool validates and preflights
+the route through ctx.llm, then passes it to startActivation; omitted fields
+inherit the Lead route.
+
+Co-Authored-By: DeepSeek Flash
+---
+ packages/experimental/agent-team/README.md    |  2 +-
+ .../experimental/agent-team/src/roster.ts     |  1 +
+ packages/experimental/agent-team/src/types.ts |  3 ++
+ .../experimental/tool-agent-team/README.md    |  6 +++
+ .../experimental/tool-agent-team/src/index.ts | 23 ++++++++++
+ .../tool-agent-team/src/spawn-selection.ts    | 44 +++++++++++++++++++
+ .../tests/spawn-selection.spec.ts             | 25 +++++++++++
+ 7 files changed, 103 insertions(+), 1 deletion(-)
+ create mode 100644 packages/experimental/tool-agent-team/src/spawn-selection.ts
+ create mode 100644 packages/experimental/tool-agent-team/tests/spawn-selection.spec.ts
+
+diff --git a/packages/experimental/agent-team/README.md b/packages/experimental/agent-team/README.md
+index 69d602f..3a4d98c 100644
+--- a/packages/experimental/agent-team/README.md
++++ b/packages/experimental/agent-team/README.md
+@@ -123,7 +123,7 @@ The [Agent Teams Agent Note](../../../.agents/notes/implemented/feature/2026-08-
+ 
+ ### Team identity and roster
+ 
+-Every ordinary runtime root is the implicit Lead of a Team whose `TeamId` equals its `SessionId`; there is no creation event, and durable Team state begins with the first member or task record. `spawnTeammate()` first appends and flushes a `provisioning` member record, then asks the configured provider to create the reserved child; a provider failure appends a durable `failed` member. A fresh child starts with no Lead history; a fork child captures the Lead's completed-turn prefix once. Recovery reconciles an unterminated provisioning record against the child's independently persisted Session: a matching direct-parent and continuable descriptor plus a recorded initial user message produces `active`, and anything else produces `failed`. If recovery wins a same-process race, the creator accepts the terminal state or reports `TEAM_PROVISIONING_CONFLICT` and drains the child. Names are reserved by the first provisioning record and never reused.
++Every ordinary runtime root is the implicit Lead of a Team whose `TeamId` equals its `SessionId`; there is no creation event, and durable Team state begins with the first member or task record. `spawnTeammate()` first appends and flushes a `provisioning` member record, then asks the configured provider to create the reserved child; a provider failure appends a durable `failed` member. A fresh child starts with no Lead history; a fork child captures the Lead's completed-turn prefix once. Recovery reconciles an unterminated provisioning record against the child's independently persisted Session: a matching direct-parent and continuable descriptor plus a recorded initial user message produces `active`, and anything else produces `failed`. If recovery wins a same-process race, the creator accepts the terminal state or reports `TEAM_PROVISIONING_CONFLICT` and drains the child. Names are reserved by the first provisioning record and never reused. `SpawnTeammateRequest.agentOptions` optionally overrides the child LLM route; omitted fields inherit the Lead route.
+ 
+ ### Direct messages and historical compatibility
+ 
+diff --git a/packages/experimental/agent-team/src/roster.ts b/packages/experimental/agent-team/src/roster.ts
+index 7b1047a..c4f14a8 100644
+--- a/packages/experimental/agent-team/src/roster.ts
++++ b/packages/experimental/agent-team/src/roster.ts
+@@ -269,6 +269,7 @@ export class TeamRoster {
+         request: {
+           prompt: request.prompt,
+           parent: root,
++          ...request.agentOptions === undefined ? {} : { agentOptions: request.agentOptions },
+         },
+         signal,
+       })
+diff --git a/packages/experimental/agent-team/src/types.ts b/packages/experimental/agent-team/src/types.ts
+index 465f6bb..a2fc77f 100644
+--- a/packages/experimental/agent-team/src/types.ts
++++ b/packages/experimental/agent-team/src/types.ts
+@@ -3,6 +3,7 @@
+ import type { MessageId } from '@deepseek-ai/dsh-llm/brand'
+ import type { Branded } from '@deepseek-ai/dsh-brand'
+ import type { ContentBlock } from '@deepseek-ai/dsh-llm/types'
++import type { AgentOptions } from '@deepseek-ai/dsh-agent'
+ import type { SessionId } from '@deepseek-ai/dsh-session/types'
+ 
+ /** Identifies the implicit team rooted at one top-level Session. */
+@@ -168,6 +169,8 @@ export interface SpawnTeammateRequest {
+   readonly prompt: ContentBlock[]
+   readonly context: 'fresh' | 'fork'
+   readonly provider: string
++  /** Optional child LLM route; omitted fields inherit the Lead route. */
++  readonly agentOptions?: AgentOptions
+   readonly signal: AbortSignal
+ }
+ 
+diff --git a/packages/experimental/tool-agent-team/README.md b/packages/experimental/tool-agent-team/README.md
+index 1afed86..295b2e9 100644
+--- a/packages/experimental/tool-agent-team/README.md
++++ b/packages/experimental/tool-agent-team/README.md
+@@ -47,6 +47,12 @@ The smallest addition to an existing composition is the two-package fragment fro
+ |---|---|---|
+ | `freshProvider` | `spawn` | Provider that starts fresh teammates |
+ | `forkProvider` | `fork` | Provider that starts fork teammates |
++| `modelSelection` | `true` | Expose optional `provider`, `model`, and `reasoning_effort` on `spawn_teammate` |
++
++When `modelSelection` is enabled, a `spawn_teammate` call may name an explicit child
++LLM route with `provider` + `model` and an optional `reasoning_effort`. The route is
++preflighted through `ctx.llm` and passed to the subagent provider as
++`agentOptions`; omitted fields inherit the Lead route.
+ 
+ The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-experimental-tool-agent-team) is the exhaustive source for every accepted field and its JSDoc.
+ 
+diff --git a/packages/experimental/tool-agent-team/src/index.ts b/packages/experimental/tool-agent-team/src/index.ts
+index bc827c5..95804f6 100644
+--- a/packages/experimental/tool-agent-team/src/index.ts
++++ b/packages/experimental/tool-agent-team/src/index.ts
+@@ -7,6 +7,7 @@ import { TeamTaskId } from '@deepseek-ai/dsh-experimental-agent-team'
+ import type { TeamMemberView } from '@deepseek-ai/dsh-experimental-agent-team'
+ import { defineTool } from '@deepseek-ai/dsh-tools'
+ import type { InferValue, ValueSchemaSpec } from '@deepseek-ai/dsh-tools'
++import { resolveSpawnAgentOptions } from './spawn-selection.ts'
+ 
+ /** Cordis plugin name. */
+ export const name = 'tool-agent-team'
+@@ -21,6 +22,8 @@ export interface Config {
+   readonly freshProvider?: string
+   /** Continuable-subagent provider used for completed-prefix fork teammates. */
+   readonly forkProvider?: string
++  /** Expose optional child `provider`, `model`, and `reasoning_effort` on `spawn_teammate`. Defaults to true. */
++  readonly modelSelection?: boolean
+ }
+ 
+ /** Loader schema for the opt-in Team tool plugin. */
+@@ -28,6 +31,7 @@ export const Config: z<Config> = z.object({
+   interrupt: z.boolean().default(true),
+   freshProvider: z.string().default('spawn'),
+   forkProvider: z.string().default('fork'),
++  modelSelection: z.boolean().default(true),
+ })
+ 
+ /** Model-facing collaboration guidance shared by Lead and teammates. */
+@@ -201,17 +205,36 @@ To message another teammate, use send_message({ target: "<teammate name>", messa
+           enum: ['fresh', 'fork'],
+           description: 'fresh starts without Lead history; fork inherits completed Lead turns. Defaults to fresh.',
+         },
++        provider: { type: 'string', description: 'Optional child LLM provider route; supply together with model.' },
++        model: { type: 'string', description: 'Optional child LLM model id; supply together with provider.' },
++        reasoning_effort: { type: 'string', description: 'Optional reasoning effort for the child route.' },
+       },
+       output: jsonOutput(SPAWN_VALUE_SCHEMA),
+       async execute(args, exec) {
+         const agent = callingAgent(exec.agent, 'spawn_teammate')
+         const context = args.context ?? 'fresh'
++        const requested = args.provider !== undefined || args.model !== undefined || args.reasoning_effort !== undefined
++        if (requested && config.modelSelection === false) {
++          throw new Error('child model selection is disabled for this tool instance')
++        }
++        const agentOptions = requested
++          ? resolveSpawnAgentOptions({
++              provider: args.provider,
++              model: args.model,
++              reasoning_effort: args.reasoning_effort,
++            })
++          : undefined
++        if (agentOptions !== undefined) {
++          const llm = ctx.get('llm')
++          if (llm !== undefined) llm.resolveCallConfig(agentOptions)
++        }
+         const result = await ctx.agentTeams.spawnTeammate(agent, {
+           name: args.name,
+           description: args.description,
+           prompt: [{ type: 'text', text: args.prompt }],
+           context,
+           provider: context === 'fork' ? config.forkProvider : config.freshProvider,
++          ...agentOptions === undefined ? {} : { agentOptions },
+           signal: exec.signal,
+         })
+         return { member: modelMember(result.member) }
+diff --git a/packages/experimental/tool-agent-team/src/spawn-selection.ts b/packages/experimental/tool-agent-team/src/spawn-selection.ts
+new file mode 100644
+index 0000000..e62b886
+--- /dev/null
++++ b/packages/experimental/tool-agent-team/src/spawn-selection.ts
+@@ -0,0 +1,44 @@
++/** Resolve an optional explicit child model route for one teammate spawn. */
++
++import type { AgentOptions } from '@deepseek-ai/dsh-agent'
++import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
++
++/** Model-facing route fields accepted by `spawn_teammate`. */
++export interface SpawnModelSelection {
++  readonly provider?: string
++  readonly model?: string
++  readonly reasoning_effort?: string
++}
++
++/**
++ * Build child agent options for one teammate spawn.
++ * @param selection - model-facing route fields from the tool call.
++ * @returns the child route, or undefined when the spawn inherits the Lead route.
++ * @throws when provider and model are not supplied together or a supplied value is blank.
++ */
++export function resolveSpawnAgentOptions(selection: SpawnModelSelection): AgentOptions | undefined {
++  const provider = optionalNonEmpty(selection.provider, 'provider')
++  const model = optionalNonEmpty(selection.model, 'model')
++  const effort = optionalNonEmpty(selection.reasoning_effort, 'reasoning_effort')
++  if (provider === undefined && model === undefined && effort === undefined) return undefined
++  if (provider === undefined || model === undefined) {
++    throw new Error('child LLM `provider` and `model` must be supplied together')
++  }
++  return {
++    provider,
++    model,
++    ...effort === undefined ? {} : { reasoningEffort: ReasoningEffortId(effort) },
++  }
++}
++
++/**
++ * Reject a present but blank model-facing value.
++ * @param value - candidate field value.
++ * @param field - field name used in the diagnostic.
++ * @returns the value, or undefined when omitted.
++ */
++function optionalNonEmpty(value: string | undefined, field: string): string | undefined {
++  if (value === undefined) return undefined
++  if (value.length === 0) throw new Error(`child LLM \`${field}\` must be non-empty`)
++  return value
++}
+diff --git a/packages/experimental/tool-agent-team/tests/spawn-selection.spec.ts b/packages/experimental/tool-agent-team/tests/spawn-selection.spec.ts
+new file mode 100644
+index 0000000..012d43f
+--- /dev/null
++++ b/packages/experimental/tool-agent-team/tests/spawn-selection.spec.ts
+@@ -0,0 +1,25 @@
++import { describe, expect, it } from 'vitest'
++import { resolveSpawnAgentOptions } from '../src/spawn-selection.ts'
++
++describe('resolveSpawnAgentOptions', () => {
++  it('returns undefined when no route is requested', () => {
++    expect(resolveSpawnAgentOptions({})).toBeUndefined()
++  })
++
++  it('builds an exact route with optional effort', () => {
++    expect(resolveSpawnAgentOptions({ provider: 'p', model: 'm' })).toEqual({ provider: 'p', model: 'm' })
++    expect(resolveSpawnAgentOptions({ provider: 'p', model: 'm', reasoning_effort: 'high' }))
++      .toMatchObject({ provider: 'p', model: 'm', reasoningEffort: 'high' })
++  })
++
++  it('rejects a partial route', () => {
++    expect(() => resolveSpawnAgentOptions({ provider: 'p' })).toThrow(/together/)
++    expect(() => resolveSpawnAgentOptions({ model: 'm' })).toThrow(/together/)
++    expect(() => resolveSpawnAgentOptions({ reasoning_effort: 'high' })).toThrow(/together/)
++  })
++
++  it('rejects a blank supplied value', () => {
++    expect(() => resolveSpawnAgentOptions({ provider: '', model: 'm' })).toThrow(/non-empty/)
++    expect(() => resolveSpawnAgentOptions({ provider: 'p', model: 'm', reasoning_effort: '' })).toThrow(/non-empty/)
++  })
++})
+-- 
+2.50.1
+

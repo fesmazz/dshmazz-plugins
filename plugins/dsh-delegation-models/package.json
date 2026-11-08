@@ -1,6 +1,6 @@
 {
   "name": "@fesmazz/dsh-delegation-models",
-  "version": "0.1.1",
+  "version": "0.3.2",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -8,10 +8,12 @@
   "exports": {
     ".": "./index.js",
     "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
+    "./icon": "./icon.svg",
+    "./client": "./client.js"
   },
   "files": [
     "index.js",
+    "client.js",
     "src/*.js",
     "cordis.patch.yml",
     "locale/*.json",
@@ -24,6 +26,15 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-plugin-manager",
+        "@deepseek-ai/dsh-client-ui-sidebar-right",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
     }
   }
 }
