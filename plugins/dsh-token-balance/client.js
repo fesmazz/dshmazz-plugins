@@ -421,7 +421,7 @@ window.__ModuleLoader__.load({
         fontVariantNumeric: 'tabular-nums',
       },
       balanceBanner: { display: 'flex', alignItems: 'baseline', gap: '8px', background: '#101d29', border: '1px solid #24445f', borderRadius: '10px', padding: '8px 12px' },
-      balanceBig: { fontSize: '24px', fontWeight: 800, letterSpacing: '-0.4px', color: '#7fd1ff', fontVariantNumeric: 'tabular-nums' },
+      balanceBig: { fontSize: '34px', fontWeight: 800, letterSpacing: '-0.4px', color: '#7fd1ff', fontVariantNumeric: 'tabular-nums' },
       balanceBannerLabel: { fontSize: '11px', color: '#8ea3b8' },
       topUp: { marginLeft: 'auto', fontSize: '11px', color: '#8ea3b8', textDecoration: 'none', borderBottom: '1px dotted #4a6b85', paddingBottom: '1px' },
       panelHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' },
@@ -725,8 +725,7 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function Chart({ t, buckets, models, metric, currency, width, hoverIndex, onHover, label, axisMax }) {
-      const height = 190
+    function Chart({ t, buckets, models, metric, currency, width, hoverIndex, onHover, label, axisMax, height = 190 }) {
       const marginLeft = 46
       const marginRight = 6
       const marginTop = 8
@@ -997,7 +996,6 @@ window.__ModuleLoader__.load({
       return h(
         'div',
         { style: { display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #1e3349', paddingTop: '10px' } },
-        h('div', { style: { fontSize: '12px', fontWeight: 600 } }, t('panel.breakdown')),
         h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: gutter + 'px', padding: '0 ' + sideMargin + 'px' } }, [donut(t('panel.byProject'), projects, projectPalette, donutSize, donutBand), donut(t('panel.byKind'), categories.map((category) => ({ ...category, name: t('kind.' + category.name) })), categoryPalette, donutSize, donutBand)]),
         h('table', { style: { width: '100%', borderCollapse: 'collapse', fontSize: '12px' } },
           h('thead', null, h('tr', null,
@@ -1013,7 +1011,7 @@ window.__ModuleLoader__.load({
 
     function UsagePanel({ t, store, sessionId }) {
       const state = useUsage(store)
-      const [tab, setTab] = React.useState('cost')
+      const [consumptionOpen, setConsumptionOpen] = React.useState(true)
       React.useEffect(() => {
         if (sessionId !== undefined) store.setSession(sessionId)
       }, [sessionId])
@@ -1040,7 +1038,7 @@ window.__ModuleLoader__.load({
       const models = win === undefined ? [] : win.models
       const totals = win === undefined ? null : win.totals
       const empty = win === undefined || win.totals.requests === 0
-      const metric = tab === 'cost' ? 'cost' : 'tokens'
+      const metric = 'cost'
       const axisOptions = [0.5, 1, 1.5, 2, 5, 10, 20, 50, 100]
       const costMax = win === undefined ? 0 : Math.max(0, ...win.buckets.map((bucket) => bucketValue(bucket, models, 'cost')))
       const fitAxis = (value) => axisOptions.find((range) => range >= value) ?? 100
@@ -1048,31 +1046,19 @@ window.__ModuleLoader__.load({
       const statsList =
         totals === null
           ? []
-          : tab === 'cost'
-            ? [
-                [t('stat.cost'), formatCost(totals.cost, currency)],
-                [t('stat.requests'), formatInt(totals.requests)],
-                [t('stat.tokens'), formatTokens(totals.totalTokens)],
-              ]
-            : [
-                [t('stat.totalTokens'), formatTokens(totals.totalTokens)],
-                [t('stat.prompt'), formatTokens(totals.inputTokens + totals.cacheReadTokens + totals.cacheWriteTokens)],
-                [t('stat.completion'), formatTokens(totals.outputTokens)],
-              ]
+          : [
+              [t('stat.cost'), formatCost(totals.cost, currency)],
+              [t('stat.requests'), formatInt(totals.requests)],
+              [t('stat.tokens'), formatTokens(totals.totalTokens)],
+            ]
       const balanceText = data === null ? undefined : balanceTextOf(data.balance, t)
       const bucketMs = win === undefined ? 3_600_000 : win.bucketMs
       const chartTitle =
-        tab === 'cost'
-          ? bucketMs < 3_600_000
-            ? t('panel.costPer30m')
-            : bucketMs > 3_600_000
-              ? t('panel.costPer2h')
-              : t('panel.costByHour')
-          : bucketMs < 3_600_000
-            ? t('panel.tokensPer30m')
-            : bucketMs > 3_600_000
-              ? t('panel.tokensPer2h')
-              : t('panel.tokensByHour')
+        bucketMs < 3_600_000
+          ? t('panel.costPer30m')
+          : bucketMs > 3_600_000
+            ? t('panel.costPer2h')
+            : t('panel.costByHour')
 
       const content = []
       content.push(
@@ -1087,7 +1073,14 @@ window.__ModuleLoader__.load({
             t('panel.topUp') + ' ↗',
           ),
         ),
-        h(Tabs, { key: 'tabs', t, tab, onChange: setTab }),
+      )
+      content.push(h('div', { key: 'balance-gap', style: { height: '24px' } }))
+      content.push(
+        h(
+          'div',
+          { key: 'range', style: { display: 'flex', alignItems: 'center', marginBottom: '10px' } },
+          h(RangePicker, { t, hours: state.hours, onChange: (hours) => store.setHours(hours) }),
+        ),
       )
 
       if (data === null) {
@@ -1119,7 +1112,7 @@ window.__ModuleLoader__.load({
               statsList.map((entry, index) =>
                 h(
                   'div',
-                  { key: entry[0], style: index === 0 ? { ...S.stat, ...S.statFirst } : S.stat },
+                  { key: entry[0], style: { ...(index === 0 ? { ...S.stat, ...S.statFirst } : S.stat), textAlign: 'center' } },
                   h('div', { style: S.statValue }, entry[1]),
                   h('div', { style: S.statLabel }, entry[0]),
                 ),
@@ -1131,21 +1124,18 @@ window.__ModuleLoader__.load({
           h(
             'div',
             { key: 'controls', style: { display: 'flex', alignItems: 'center', gap: '8px' } },
-            h(RangePicker, { t, hours: state.hours, onChange: (hours) => store.setHours(hours) }),
-            tab === 'cost'
-              ? h(
-                  'span',
-                  { style: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#8ea3b8' } },
-                  h('span', null, t('panel.axis')),
-                  h(
-                    'select',
-                    { style: { background: '#132334', color: '#e7eef7', border: '1px solid #25405a', borderRadius: '6px', padding: '2px 6px', fontSize: '11px' }, value: axisChoice, onChange: (event) => setAxisChoice(event.target.value) },
-                    [h('option', { key: 'auto', value: 'auto' }, t('panel.axisAuto'))].concat(
-                      axisOptions.map((range) => h('option', { key: String(range), value: String(range) }, '$' + range.toFixed(2))),
-                    ),
-                  ),
-                )
-              : null,
+            h(
+              'span',
+              { style: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#8ea3b8' } },
+              h('span', null, t('panel.axis')),
+              h(
+                'select',
+                { style: { background: '#132334', color: '#e7eef7', border: '1px solid #25405a', borderRadius: '6px', padding: '2px 6px', fontSize: '11px' }, value: axisChoice, onChange: (event) => setAxisChoice(event.target.value) },
+                [h('option', { key: 'auto', value: 'auto' }, t('panel.axisAuto'))].concat(
+                  axisOptions.map((range) => h('option', { key: String(range), value: String(range) }, '$' + range.toFixed(2))),
+                ),
+              ),
+            ),
           ),
         )
         content.push(
@@ -1183,11 +1173,20 @@ window.__ModuleLoader__.load({
                   hoverIndex,
                   axisMax: chartAxisMax,
                   label: chartTitle,
+                  height: consumptionOpen ? 190 : 300,
                   onHover: (index) => setHoverIndex(index),
                 }),
           ),
         )
-        if (data.breakdown !== undefined) {
+        content.push(
+          h(
+            'button',
+            { key: 'consumption-head', type: 'button', onClick: () => setConsumptionOpen((open) => !open), style: { display: 'flex', alignItems: 'center', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid #1e3349', color: '#e7eef7', fontSize: '12px', fontWeight: 600, padding: '9px 0 0', marginTop: '8px', cursor: 'pointer' } },
+            t('panel.breakdown'),
+            h('span', { style: { marginLeft: 'auto', color: '#8ea3b8', fontWeight: 400 } }, consumptionOpen ? '▾' : '▸'),
+          ),
+        )
+        if (consumptionOpen && data.breakdown !== undefined) {
           content.push(h(Breakdown, { key: 'breakdown', t, breakdown: data.breakdown, currency, width }))
         }
         content.push(

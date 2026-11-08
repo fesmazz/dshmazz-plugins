@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:14px;display:grid;grid-template-columns:repeat(3,404px);gap:12px}
+.card{background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:12px}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.banner{display:flex;align-items:center;gap:8px;border:1px solid #24445f;background:#101d29;border-radius:10px;padding:10px 12px}
+.banner b{font-size:34px;font-weight:800;letter-spacing:-.6px;color:#7fd1ff;line-height:1}
+.banner span{font-size:12px;color:#b8c7d6}
+.banner a{margin-left:auto;font-size:11px;color:#8ea3b8;text-decoration:none;border-bottom:1px dotted #4a6b85}
+.spacer{height:24px}
+.tabs{display:flex;gap:4px}.tab{font-size:10px;padding:4px 12px;border-radius:7px;background:#141f2b;color:#8ea3b8}.tab.on{background:#f7fafc;color:#0b1622;font-weight:700}
+.row{display:flex;align-items:center;gap:6px;margin:8px 0}
+.range{display:flex;background:#141f2b;border-radius:7px;padding:2px}.range span{padding:2px 8px;border-radius:5px;font-size:10px;color:#8ea3b8}.range .on{background:#f7fafc;color:#0b1622;font-weight:700}
+.yaxis{margin-left:auto;border:1px solid #25405a;border-radius:6px;padding:2px 8px;font-size:10px;color:#8ea3b8}
+.stats{display:flex;gap:8px;border-top:1px solid #1e3349;padding-top:8px}
+.stat{flex:1}.stat b{font-size:23px;letter-spacing:-.2px}.stat span{display:block;font-size:10px;color:#8ea3b8;margin-top:2px}
+.charthead{display:flex;align-items:center;font-size:11px;color:#e7eef7;margin-top:10px;border-top:1px solid #1e3349;padding-top:8px}
+.legend{margin-left:auto;font-size:9px;color:#8ea3b8}
+.note{font-size:9px;color:#657a8f;margin-top:7px}
+</style></head><body>
+<div class="card"><div class="tag">O1 — range under tabs, directly above stats (recommended)</div>
+<div class="banner"><b>$8.99</b><span>Balance</span><a>Top up ↗</a></div><div class="spacer"></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="row"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="charthead">Cost by hour<span class="legend">● v4-pro ● flash</span></div><div class="note">Range sits between tabs and the numbers it controls; Y axis stays above the chart.</div></div>
+<div class="card"><div class="tag">O2 — range on the tabs row, right-aligned</div>
+<div class="banner"><b>$8.99</b><span>Balance</span><a>Top up ↗</a></div><div class="spacer"></div>
+<div class="row"><div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div><span class="range" style="margin-left:auto"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="charthead">Cost by hour<span class="legend">● v4-pro ● flash</span></div><div class="note">Saves a row; the range reads as a global control rather than tied to the stats.</div></div>
+<div class="card"><div class="tag">O3 — range above tabs</div>
+<div class="banner"><b>$8.99</b><span>Balance</span><a>Top up ↗</a></div><div class="spacer"></div>
+<div class="row"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="charthead">Cost by hour<span class="legend">● v4-pro ● flash</span></div><div class="note">Range highest; applies to both Cost and Tokens views.</div></div>
+<div class="card"><div class="tag">O4 — range above tabs, right-aligned</div>
+<div class="banner"><b>$8.99</b><span>Balance</span><a>Top up ↗</a></div><div class="spacer"></div>
+<div class="row"><span class="range" style="margin-left:auto"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="charthead">Cost by hour<span class="legend">● v4-pro ● flash</span></div><div class="note">Mirrors the balance row's right alignment; range and balance both right.</div></div>
+<div class="card"><div class="tag">O5 — range and Y axis together above stats</div>
+<div class="banner"><b>$8.99</b><span>Balance</span><a>Top up ↗</a></div><div class="spacer"></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="row"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span><span class="yaxis">Y axis Auto ▾</span></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="charthead">Cost by hour<span class="legend">● v4-pro ● flash</span></div><div class="note">Both controls above the numbers; the chart area is uncluttered.</div></div>
+<div class="card"><div class="tag">O6 — range centered above stats</div>
+<div class="banner"><b>$8.99</b><span>Balance</span><a>Top up ↗</a></div><div class="spacer"></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="row" style="justify-content:center"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="charthead">Cost by hour<span class="legend">● v4-pro ● flash</span></div><div class="note">Centered selector; symmetric, but drifts from the panel's left-aligned rhythm.</div></div>
+</body></html>

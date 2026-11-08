@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:16px;display:flex;gap:14px}
+.card{width:392px;background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:12px}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.banner{display:flex;align-items:baseline;gap:8px;background:#101d29;border:1px solid #24445f;border-radius:9px;padding:7px 10px;margin-bottom:8px}
+.banner b{font-size:20px;color:#7fd1ff}.banner span{font-size:10px;color:#8ea3b8}.banner a{margin-left:auto;font-size:10px;color:#8ea3b8;text-decoration:none;border-bottom:1px dotted #4a6b85}
+.tabs{display:flex;gap:4px;margin-bottom:8px}.tab{font-size:10px;padding:4px 12px;border-radius:7px;background:#141f2b;color:#8ea3b8}.tab.on{background:#f7fafc;color:#0b1622;font-weight:700}
+.controls{display:flex;align-items:center;gap:6px;font-size:10px;color:#8ea3b8;margin-bottom:6px}
+.range{display:flex;background:#141f2b;border-radius:7px;padding:2px}.range span{padding:2px 8px;border-radius:5px}.range .on{background:#f7fafc;color:#0b1622;font-weight:700}
+.yaxis{margin-left:auto;border:1px solid #25405a;border-radius:6px;padding:2px 8px}
+.chart{position:relative;height:200px;border-bottom:1px solid #1e3349;margin-bottom:8px}
+.grid{position:absolute;left:0;right:0;border-top:1px solid #1e3349}.bars{position:absolute;bottom:0;left:8px;right:8px;display:flex;align-items:stretch;gap:5px;height:100%}
+.bar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.bar i{display:block;border-radius:2px}
+.collapsed{display:flex;align-items:center;gap:8px;border-top:1px solid #1e3349;padding-top:9px;margin-top:2px}
+.collapsed b{font-size:12px}.chev{margin-left:auto;color:#8ea3b8;font-size:12px}
+.summary{font-size:10px;color:#8ea3b8}
+.pill{margin:8px auto 0;display:inline-flex;align-items:center;gap:6px;border:1px solid #24445f;border-radius:999px;padding:4px 12px;font-size:10px;color:#b8c7d6}
+.note{font-size:9.5px;color:#657a8f;margin-top:8px;line-height:1.35}
+</style></head><body>
+<div class="card"><div class="tag">Concept A — chevron collapse (recommended)</div>
+<div class="banner"><b>$7.68</b><span>Balance</span><a>Top up ↗</a></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="controls"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span><span class="yaxis">Y axis Auto ▾</span></div>
+<div class="chart"><div class="grid" style="top:33%"></div><div class="grid" style="top:66%"></div>
+<div class="bars"><div class="bar"><i style="height:55%;background:#f5a623"></i><i style="height:8%;background:#3aa0ff"></i></div><div class="bar"><i style="height:70%;background:#f5a623"></i></div><div class="bar"><i style="height:30%;background:#f5a623"></i></div><div class="bar"><i style="height:45%;background:#3aa0ff"></i><i style="height:30%;background:#f5a623"></i></div><div class="bar"><i style="height:80%;background:#3aa0ff"></i></div><div class="bar"><i style="height:35%;background:#3aa0ff"></i></div><div class="bar"><i style="height:50%;background:#f5a623"></i></div><div class="bar"><i style="height:25%;background:#3aa0ff"></i></div><div class="bar"><i style="height:40%;background:#f5a623"></i></div></div></div>
+<div class="collapsed"><b>Consumption</b><span class="chev">▾</span></div>
+<div class="note">Header row keeps its place; clicking it hides the doughnuts and table and the chart grows into the freed height.</div></div>
+<div class="card"><div class="tag">Concept B — summary that collapses</div>
+<div class="banner"><b>$7.68</b><span>Balance</span><a>Top up ↗</a></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="controls"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span><span class="yaxis">Y axis Auto ▾</span></div>
+<div class="chart" style="height:230px"><div class="grid" style="top:33%"></div><div class="grid" style="top:66%"></div>
+<div class="bars"><div class="bar"><i style="height:55%;background:#f5a623"></i></div><div class="bar"><i style="height:70%;background:#f5a623"></i></div><div class="bar"><i style="height:30%;background:#f5a623"></i></div><div class="bar"><i style="height:45%;background:#3aa0ff"></i></div><div class="bar"><i style="height:80%;background:#3aa0ff"></i></div><div class="bar"><i style="height:35%;background:#3aa0ff"></i></div><div class="bar"><i style="height:50%;background:#f5a623"></i></div><div class="bar"><i style="height:25%;background:#3aa0ff"></i></div></div></div>
+<div class="collapsed"><b>Consumption</b><span class="summary">Projects $20.61 · Chat 62% / Sub-agent 38%</span><span class="chev">▸</span></div>
+<div class="note">Collapsed row carries a one-line summary of the hidden breakdown; the chart is slightly taller than A.</div></div>
+<div class="card"><div class="tag">Concept C — collapse to a pill</div>
+<div class="banner"><b>$7.68</b><span>Balance</span><a>Top up ↗</a></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="controls"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span><span class="yaxis">Y axis Auto ▾</span></div>
+<div class="chart" style="height:240px"><div class="grid" style="top:33%"></div><div class="grid" style="top:66%"></div>
+<div class="bars"><div class="bar"><i style="height:55%;background:#f5a623"></i></div><div class="bar"><i style="height:70%;background:#f5a623"></i></div><div class="bar"><i style="height:30%;background:#f5a623"></i></div><div class="bar"><i style="height:45%;background:#3aa0ff"></i></div><div class="bar"><i style="height:80%;background:#3aa0ff"></i></div><div class="bar"><i style="height:35%;background:#3aa0ff"></i></div><div class="bar"><i style="height:50%;background:#f5a623"></i></div><div class="bar"><i style="height:25%;background:#3aa0ff"></i></div></div></div>
+<div style="text-align:center"><span class="pill">▸ Show consumption</span></div>
+<div class="note">The whole block becomes one compact pill; maximum chart height. The header title disappears while collapsed.</div></div>
+</body></html>

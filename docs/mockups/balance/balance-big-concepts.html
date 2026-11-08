@@ -1,0 +1,53 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:16px;display:flex;gap:14px}
+.card{width:392px;background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:12px}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.tabs{display:flex;gap:4px;margin-bottom:8px}.tab{font-size:10px;padding:4px 12px;border-radius:7px;background:#141f2b;color:#8ea3b8}.tab.on{background:#f7fafc;color:#0b1622;font-weight:700}
+.controls{display:flex;align-items:center;gap:6px;font-size:10px;color:#8ea3b8;margin-bottom:6px}
+.range{display:flex;background:#141f2b;border-radius:7px;padding:2px}.range span{padding:2px 8px;border-radius:5px}.range .on{background:#f7fafc;color:#0b1622;font-weight:700}
+.yaxis{margin-left:auto;border:1px solid #25405a;border-radius:6px;padding:2px 8px}
+.chart{position:relative;height:180px;border-bottom:1px solid #1e3349;margin-bottom:8px}
+.grid{position:absolute;left:0;right:0;border-top:1px solid #1e3349}
+.bars{position:absolute;bottom:0;left:8px;right:8px;display:flex;align-items:stretch;gap:5px;height:100%}
+.bar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.bar i{display:block;border-radius:2px}
+.collapsed{display:flex;align-items:center;gap:8px;border-top:1px solid #1e3349;padding-top:9px}.collapsed b{font-size:12px}.chev{margin-left:auto;color:#8ea3b8}
+.note{font-size:9.5px;color:#657a8f;margin-top:8px;line-height:1.35}
+/* design 1 */
+.b1{display:flex;align-items:baseline;gap:10px;background:#101d29;border:1px solid #24445f;border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.b1 b{font-size:34px;font-weight:800;letter-spacing:-.6px;color:#7fd1ff}.b1 span{font-size:12px;color:#b8c7d6}.b1 a{margin-left:auto;font-size:11px;color:#8ea3b8;text-decoration:none;border-bottom:1px dotted #4a6b85}
+/* design 2 */
+.b2{background:#101d29;border:1px solid #24445f;border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.b2 .top{display:flex;align-items:center;font-size:10px;color:#8ea3b8;margin-bottom:2px}.b2 .top a{margin-left:auto;font-size:10px;color:#7fd1ff;text-decoration:none;border:1px solid #2d5a7a;border-radius:999px;padding:2px 9px}
+.b2 b{font-size:40px;font-weight:800;letter-spacing:-1px;color:#7fd1ff}
+/* design 3 */
+.b3{display:flex;align-items:flex-end;gap:10px;margin-bottom:10px}
+.b3 .num b{font-size:42px;font-weight:800;letter-spacing:-1.2px;color:#7fd1ff;display:block;line-height:1}
+.b3 .num span{font-size:10px;color:#8ea3b8}.b3 a{margin-left:auto;font-size:10px;color:#b8c7d6;text-decoration:none;border:1px solid #24445f;border-radius:999px;padding:3px 10px}
+.stats{display:flex;gap:8px;border-top:1px solid #1e3349;padding-top:8px;margin-bottom:8px}
+.stat{flex:1}.stat b{font-size:16px}.stat span{display:block;font-size:9.5px;color:#8ea3b8}
+</style></head><body>
+<div class="card"><div class="tag">Design 1 — oversized inline balance</div>
+<div class="b1"><b>$8.99</b><span>Balance</span><a>Top up ↗</a></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="controls"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span><span class="yaxis">Y axis Auto ▾</span></div>
+<div class="chart"><div class="grid" style="top:33%"></div><div class="grid" style="top:66%"></div><div class="bars"><div class="bar"><i style="height:45%;background:#f5a623"></i></div><div class="bar"><i style="height:60%;background:#f5a623"></i></div><div class="bar"><i style="height:30%;background:#f5a623"></i></div><div class="bar"><i style="height:55%;background:#3aa0ff"></i></div><div class="bar"><i style="height:75%;background:#3aa0ff"></i></div><div class="bar"><i style="height:35%;background:#3aa0ff"></i></div></div></div>
+<div class="collapsed"><b>Consumption</b><span class="chev">▾</span></div>
+<div class="note">Same inline banner, balance enlarged to 34px so it leads the eye; all other rows unchanged.</div></div>
+<div class="card"><div class="tag">Design 2 — balance hero with top-up pill (recommended)</div>
+<div class="b2"><div class="top"><span>Remaining balance</span><a>Top up ↗</a></div><b>$8.99</b></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="controls"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span><span class="yaxis">Y axis Auto ▾</span></div>
+<div class="chart"><div class="grid" style="top:33%"></div><div class="grid" style="top:66%"></div><div class="bars"><div class="bar"><i style="height:45%;background:#f5a623"></i></div><div class="bar"><i style="height:60%;background:#f5a623"></i></div><div class="bar"><i style="height:30%;background:#f5a623"></i></div><div class="bar"><i style="height:55%;background:#3aa0ff"></i></div><div class="bar"><i style="height:75%;background:#3aa0ff"></i></div><div class="bar"><i style="height:35%;background:#3aa0ff"></i></div></div></div>
+<div class="collapsed"><b>Consumption</b><span class="chev">▾</span></div>
+<div class="note">A hero block: label above, 40px balance, and a bordered Top up pill in the corner; the strongest emphasis.</div></div>
+<div class="card"><div class="tag">Design 3 — oversized number, quiet chrome</div>
+<div class="b3"><div class="num"><b>$8.99</b><span>Balance</span></div><a>Top up ↗</a></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div>
+<div class="controls"><span class="range"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span><span class="yaxis">Y axis Auto ▾</span></div>
+<div class="chart"><div class="grid" style="top:33%"></div><div class="grid" style="top:66%"></div><div class="bars"><div class="bar"><i style="height:45%;background:#f5a623"></i></div><div class="bar"><i style="height:60%;background:#f5a623"></i></div><div class="bar"><i style="height:30%;background:#f5a623"></i></div><div class="bar"><i style="height:55%;background:#3aa0ff"></i></div><div class="bar"><i style="height:75%;background:#3aa0ff"></i></div><div class="bar"><i style="height:35%;background:#3aa0ff"></i></div></div></div>
+<div class="collapsed"><b>Consumption</b><span class="chev">▾</span></div>
+<div class="note">42px balance with no card border; stats sit right below it and the Top up control is a quiet pill.</div></div>
+</body></html>

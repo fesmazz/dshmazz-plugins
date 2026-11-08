@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:14px;display:grid;grid-template-columns:repeat(3,404px);gap:12px}
+.card{background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:12px}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.banner{border:1px solid #24445f;background:#101d29;border-radius:10px;padding:10px 12px;text-align:center}
+.banner .row1{display:flex;align-items:baseline;justify-content:center;gap:8px}
+.banner b{font-size:var(--bal,32px);font-weight:800;letter-spacing:-.6px;color:#7fd1ff;line-height:1}
+.banner span{font-size:12px;color:#b8c7d6}
+.topup{display:inline-block;margin-top:3px;font-size:11px;color:#8ea3b8;text-decoration:none;border-bottom:1px dotted #4a6b85}
+.spacer{height:var(--sp)}
+.stats{display:flex;gap:8px;border-top:1px solid #1e3349;padding-top:8px}
+.stat{flex:1}.stat b{font-size:var(--stat,20px);letter-spacing:-.2px}.stat span{display:block;font-size:10px;color:#8ea3b8;margin-top:2px}
+.tabs{display:flex;gap:4px;margin-top:10px}.tab{font-size:10px;padding:4px 12px;border-radius:7px;background:#141f2b;color:#8ea3b8}.tab.on{background:#f7fafc;color:#0b1622;font-weight:700}
+.note{font-size:9px;color:#657a8f;margin-top:8px}
+</style></head><body>
+<div class="card"><div class="tag">V1 — 32px balance · 20px stats · spacer 16</div>
+<div class="banner"><div class="row1"><b>$8.99</b><span>Balance</span></div><a class="topup">Top up ↗</a></div>
+<div class="spacer" style="--sp:16px;height:16px"></div>
+<div class="stats"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div><div class="note">Top up centered under the balance; modest spacer.</div></div>
+<div class="card"><div class="tag">V2 — 34px balance · 21px stats · spacer 20</div>
+<div class="banner" style="--bal:34px"><div class="row1"><b>$8.99</b><span>Balance</span></div><a class="topup">Top up ↗</a></div>
+<div style="height:20px"></div>
+<div class="stats" style="--stat:21px"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div><div class="note">Slightly larger both, balanced spacing.</div></div>
+<div class="card"><div class="tag">V3 — 36px balance · 22px stats · spacer 24 (recommended)</div>
+<div class="banner" style="--bal:36px"><div class="row1"><b>$8.99</b><span>Balance</span></div><a class="topup">Top up ↗</a></div>
+<div style="height:24px"></div>
+<div class="stats" style="--stat:22px"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div><div class="note">Balance leads clearly; stats no longer look small; generous spacer.</div></div>
+<div class="card"><div class="tag">V4 — 38px balance · 23px stats · spacer 28</div>
+<div class="banner" style="--bal:38px"><div class="row1"><b>$8.99</b><span>Balance</span></div><a class="topup">Top up ↗</a></div>
+<div style="height:28px"></div>
+<div class="stats" style="--stat:23px"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div><div class="note">Biggest balance and stats; needs the most vertical room.</div></div>
+<div class="card"><div class="tag">V5 — 34px balance · 23px stats · spacer 24 · top up same line</div>
+<div class="banner" style="--bal:34px;text-align:left;display:flex;align-items:center;gap:8px"><b>$8.99</b><span>Balance</span><a class="topup" style="margin-left:auto;margin-top:0">Top up ↗</a></div>
+<div style="height:24px"></div>
+<div class="stats" style="--stat:23px"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div><div class="note">Top up sits on the same line, centered vertically against the number.</div></div>
+<div class="card"><div class="tag">V6 — 36px balance · 24px stats · spacer 30 · top up below</div>
+<div class="banner" style="--bal:36px"><div class="row1"><b>$8.99</b><span>Balance</span></div><a class="topup">Top up ↗</a></div>
+<div style="height:30px"></div>
+<div class="stats" style="--stat:24px"><div class="stat"><b>$20.61</b><span>Est. cost</span></div><div class="stat"><b>6,040</b><span>API requests</span></div><div class="stat"><b>1.69B</b><span>Tokens</span></div></div>
+<div class="tabs"><span class="tab on">Cost</span><span class="tab">Tokens</span></div><div class="note">Widest breathing room; strongest balance-to-stats separation.</div></div>
+</body></html>

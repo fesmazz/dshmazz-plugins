@@ -1,5 +1,17 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.10] - 2026-11-08
+
+### Changed
+- Removed the Cost/Tokens tabs: the Usage panel is cost-only, keeping the Y-axis
+  selector and the chart layout unchanged.
+- The time-range selector moved back above the stat values and is left-aligned;
+  the Cost / API requests / Tokens stat columns are centered.
+- The balance is larger (34px) with Top up on the same line, followed by a 24px
+  spacer before the stats.
+- The Consumption section is collapsible: the header toggles the doughnuts and
+  table, and collapsing gives the chart extra height.
+
 ## [1.3.9] - 2026-11-08
 
 ### Fixed
