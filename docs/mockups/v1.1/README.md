@@ -1,31 +1,41 @@
 # V1.1 / V1.2 UI proposal
 
-Status: **proposal for owner review — not implemented.**
+Status: **refined after owner review — not implemented.**
 
-Rendered from the `*.html` files with headless Chrome at 1440×900:
+Rendered from the `*.html` files with headless Chrome at 1440×900.
 
-- [settings.png](settings.png) — **Profiles** tab: one row per agent type × task
-  type, a model tier pill, the exact route and effort; version badge and changelog
-  link. "Auto-configure from file…" opens the import flow.
-- [import.png](import.png) — **Auto-configure** dialog: drop a JSON, XML, TXT or MD
-  file; the agent maps each rule to Hundun's categories (agent type, task type,
-  model tier), shows confidence and source line, and applies only after review.
-- [usage.png](usage.png) — **Session usage**: remaining balance, session cost and
-  token counts from Token & Balance; model split; per-agent model, tokens, cost and
-  share.
+## Owner decisions applied (2026-11-07)
 
-## Questions for the owner
+1. **Placement:** global defaults live on **Plugins → Delegation Models**; a
+   **right-sidebar panel** inherits them and can override any row for one session.
+2. **Auto-configure:** file **or paste**; the source is remembered and watched, and
+   re-applies when it changes (version-logged).
+3. **Rates:** a bundled snapshot copied from the owner's current guidelines
+   (generalized) is the default; custom rate cards can be supplied from a template.
+4. **Usage rows:** the Team roster and subagents stay separate.
+5. **Categories:** copied into the plugin; no external link to Hundun.
 
-1. Placement: Plugins → Delegation Models, Settings → Plugins → Plugin
-   configuration, or a right-sidebar panel?
-2. Auto-configure: file picker only, or also paste? Should a parsed mapping be
-   persisted and re-applied when the source file changes?
-3. Cost model: where should the rate card (per provider/model, cache, peak/off-peak)
-   live, and who updates it when prices change?
-4. V1.2: may this plugin override the team tool's `freshProvider`/`forkProvider`
-   configuration to reach a custom subagent provider?
-5. Usage rows: merge teammates and subagents in one list, or keep the Team roster
-   separate from subagent children?
+## Screens
+
+- [settings.png](settings.png) — global profiles: agent type × task type → tier,
+  route, effort; tabs for Profiles, Auto-configure, Rates, Session usage.
+- [sidebar.png](sidebar.png) — right-sidebar panel inheriting the global rows, with
+  per-session override toggles and "Apply to session".
+- [import.png](import.png) — auto-configure: file or paste, watched source with
+  re-apply, plugin-bundled categories, confidence and source line, apply after review.
+- [rates.png](rates.png) — rate card tab: bundled snapshot, custom JSON/YAML template,
+  validate/save.
+- [usage.png](usage.png) — session usage with separate Team and Subagents tables,
+  balance/cost/tokens from Token & Balance, model split.
+
+## Open item: V1.2 teammate routing
+
+The team tool's `spawn_teammate` takes no model argument. Recommendation: extend the
+harness (`SpawnTeammateRequest` and the tool) with optional provider/model/effort and
+pass `agentOptions` into `startActivation`, instead of overriding
+`freshProvider`/`forkProvider` to a hand-written subagent provider, which would
+duplicate child creation and break on harness upgrades. Rationale is in the
+`dsh-delegation-models` changelog and the Hundun session log.
 
 ## Refining the mockups
 

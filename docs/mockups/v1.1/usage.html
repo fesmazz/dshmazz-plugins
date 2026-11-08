@@ -36,7 +36,7 @@
       <div class="page-head">
         <div>
           <h1>Session usage<span class="ver">v1.1.0</span></h1>
-          <p class="sub">Who is using which model in this session — balance and tokens from Token &amp; Balance.</p>
+          <p class="sub">Team and subagent models kept separate; balance and tokens from Token &amp; Balance.</p>
         </div>
         <div class="head-actions">
           <a class="link" href="#">Changelog</a>
@@ -48,6 +48,7 @@
       <div class="tabs">
         <div class="tab">Profiles</div>
         <div class="tab">Auto-configure</div>
+        <div class="tab">Rates</div>
         <div class="tab active">Session usage</div>
       </div>
 
@@ -60,12 +61,12 @@
         <div class="metric">
           <div class="label">Session cost</div>
           <div class="value">$0.42<span class="unit">estimated</span></div>
-          <div class="foot">priced from token counts at current rates</div>
+          <div class="foot">from the active rate card</div>
         </div>
         <div class="metric">
           <div class="label">Tokens</div>
           <div class="value" style="font-size:19px">1.28M<span class="unit">in · 560k out</span></div>
-          <div class="foot">170.7M cache read · 408 assistant messages</div>
+          <div class="foot">170.7M cache read · 408 messages</div>
         </div>
       </div>
 
@@ -86,98 +87,49 @@
           <div class="legend">
             <span><i class="sw" style="background:#3aa0ff"></i>flash · 3 agents</span>
             <span><i class="sw" style="background:#e8a33d"></i>v4-pro · 2 agents</span>
-            <span class="tag" style="margin-left:auto">cache reads included</span>
+            <span class="tag" style="margin-left:auto">rates: bundled snapshot</span>
           </div>
-          <p class="hint" style="margin:12px 0 0">Cost estimate uses the current DeepSeek rate card; cache reads and writes are priced separately from fresh input.</p>
         </div>
-
         <div class="panel">
           <h3>In this session</h3>
-          <p class="hint">5 agents · 3 on flash · 2 on v4-pro</p>
+          <p class="hint">2 team members · 3 subagents</p>
           <div class="rail-row"><span class="who">Lead<span class="role">lead</span></span><span class="pill capable">flash</span></div>
-          <div class="rail-row"><span class="who">analyst<span class="role">teammate</span></span><span class="pill capable">flash</span></div>
           <div class="rail-row"><span class="who">implementer<span class="role">teammate</span></span><span class="pill premium">v4-pro</span></div>
           <div class="rail-row"><span class="who">reviewer-a<span class="role">subagent</span></span><span class="pill capable">flash</span></div>
           <div class="rail-row"><span class="who">reviewer-b<span class="role">subagent</span></span><span class="pill premium">v4-pro</span></div>
+          <div class="rail-row"><span class="who">extractor<span class="role">subagent</span></span><span class="pill capable">flash</span></div>
         </div>
       </div>
 
-      <div class="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Agent</th>
-              <th style="width:92px">Type</th>
-              <th style="width:262px">Model</th>
-              <th style="width:58px">Turns</th>
-              <th style="width:78px">Input</th>
-              <th style="width:78px">Output</th>
-              <th style="width:72px">Cost</th>
-              <th style="width:140px">Share</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Lead</td>
-              <td><span class="tag">lead</span></td>
-              <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-flash</td>
-              <td>12</td>
-              <td>340k</td>
-              <td>120k</td>
-              <td>$0.05</td>
-              <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i class="flash" style="width:12%"></i></div><span style="color:var(--muted);font-size:11px">12%</span></div></td>
-            </tr>
-            <tr>
-              <td>analyst</td>
-              <td><span class="tag">teammate</span></td>
-              <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-flash</td>
-              <td>8</td>
-              <td>210k</td>
-              <td>88k</td>
-              <td>$0.04</td>
-              <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i class="flash" style="width:10%"></i></div><span style="color:var(--muted);font-size:11px">10%</span></div></td>
-            </tr>
-            <tr>
-              <td>implementer</td>
-              <td><span class="tag">teammate</span></td>
-              <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-v4-pro</td>
-              <td>9</td>
-              <td>480k</td>
-              <td>210k</td>
-              <td>$0.27</td>
-              <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i class="pro" style="width:64%"></i></div><span style="color:var(--muted);font-size:11px">64%</span></div></td>
-            </tr>
-            <tr>
-              <td>reviewer-a</td>
-              <td><span class="tag">subagent</span></td>
-              <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-flash</td>
-              <td>4</td>
-              <td>120k</td>
-              <td>60k</td>
-              <td>$0.03</td>
-              <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i class="flash" style="width:7%"></i></div><span style="color:var(--muted);font-size:11px">7%</span></div></td>
-            </tr>
-            <tr>
-              <td>reviewer-b</td>
-              <td><span class="tag">subagent</span></td>
-              <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-v4-pro</td>
-              <td>3</td>
-              <td>130k</td>
-              <td>82k</td>
-              <td>$0.03</td>
-              <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i class="pro" style="width:7%"></i></div><span style="color:var(--muted);font-size:11px">7%</span></div></td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="table-foot">
-          <span>Source: Token &amp; Balance (balance, tokens) + delegation records (agent → model)</span>
-          <span class="flex"></span>
-          <span>updated 12s ago</span>
+      <div class="two-tables">
+        <div class="card">
+          <div class="section-head"><h3>Team</h3><span class="chip">roster</span><span class="tag" style="margin-left:auto">inherits Lead model</span></div>
+          <table>
+            <thead><tr><th>Agent</th><th>Model</th><th style="width:56px">Turns</th><th style="width:74px">Tokens</th><th style="width:64px">Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Lead</td><td class="mono" style="font-size:11px">flash</td><td>12</td><td>460k</td><td>$0.05</td></tr>
+              <tr><td>implementer</td><td class="mono" style="font-size:11px">v4-pro</td><td>9</td><td>690k</td><td>$0.27</td></tr>
+              <tr><td>analyst</td><td class="mono" style="font-size:11px">flash</td><td>8</td><td>298k</td><td>$0.04</td></tr>
+            </tbody>
+          </table>
+          <div class="table-foot"><span>Teammates: {n} · updated 12s ago</span></div>
+        </div>
+        <div class="card">
+          <div class="section-head"><h3>Subagents</h3><span class="chip">delegations</span><span class="tag" style="margin-left:auto">explicit model</span></div>
+          <table>
+            <thead><tr><th>Agent</th><th>Model</th><th style="width:56px">Turns</th><th style="width:74px">Tokens</th><th style="width:64px">Cost</th></tr></thead>
+            <tbody>
+              <tr><td>reviewer-a</td><td class="mono" style="font-size:11px">flash</td><td>4</td><td>180k</td><td>$0.03</td></tr>
+              <tr><td>reviewer-b</td><td class="mono" style="font-size:11px">v4-pro</td><td>3</td><td>212k</td><td>$0.03</td></tr>
+              <tr><td>extractor</td><td class="mono" style="font-size:11px">flash</td><td>3</td><td>96k</td><td>$0.01</td></tr>
+            </tbody>
+          </table>
+          <div class="table-foot"><span>Subagents: 3 · updated 12s ago</span></div>
         </div>
       </div>
 
       <div class="footline">
-        <span>Cost is estimated from token counts and the rate card; cache reads priced separately.</span>
+        <span>Source: Token &amp; Balance (balance, tokens) + delegation records (agent → model) + rate card</span>
         <span class="flex"></span>
         <a class="link" href="#">Export CSV</a>
       </div>

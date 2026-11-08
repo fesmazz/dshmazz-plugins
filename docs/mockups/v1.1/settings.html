@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Delegation Models — Profiles (mockup)</title>
+<title>Delegation Models — Global profiles (mockup)</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -36,24 +36,25 @@
       <div class="page-head">
         <div>
           <h1>Delegation Models<span class="ver">v1.1.0</span></h1>
-          <p class="sub">Route agent-team and subagent work by agent type, task type and model tier.</p>
+          <p class="sub">Global defaults for agent-team and subagent work; sessions can override them from the right-sidebar panel.</p>
         </div>
         <div class="head-actions">
           <a class="link" href="#">Changelog</a>
           <button class="btn ghost">Auto-configure from file…</button>
-          <button class="btn primary">Save changes</button>
+          <button class="btn primary">Save global defaults</button>
         </div>
       </div>
 
       <div class="tabs">
         <div class="tab active">Profiles</div>
         <div class="tab">Auto-configure</div>
+        <div class="tab">Rates</div>
         <div class="tab">Session usage</div>
       </div>
 
       <div class="note info">
         <span>ⓘ</span>
-        <span><b>Routing policy.</b> Profiles map Hundun's agent types and task classes to a tier and an exact route. Teammates inherit the Lead model in this harness; per-teammate routing arrives in V1.2.</span>
+        <span><b>Global defaults.</b> The right-sidebar panel inherits these rows and may override any row for one session. Teammates inherit the Lead model until V1.2.</span>
       </div>
 
       <div class="card">
@@ -110,14 +111,6 @@
               <td><span class="row-actions">⋯</span></td>
             </tr>
             <tr>
-              <td><span class="select">Reviewer<span class="chev">▾</span></span></td>
-              <td><span class="select">Verification<span class="chev">▾</span></span></td>
-              <td><span class="pill capable"><span class="dot"></span> Capable non-premium</span></td>
-              <td><span class="select route">deepseek-account / deepseek-v4-pro<span class="chev">▾</span></span></td>
-              <td><span class="select">low<span class="chev">▾</span></span></td>
-              <td><span class="row-actions">⋯</span></td>
-            </tr>
-            <tr>
               <td><span class="select">Teammate<span class="chev">▾</span></span></td>
               <td><span class="select">Cleanup<span class="chev">▾</span></span></td>
               <td><span class="pill light"><span class="dot"></span> Light</span></td>
@@ -130,14 +123,14 @@
         <div class="table-foot">
           <button class="btn ghost small">+ Add profile</button>
           <span class="flex"></span>
-          <span>7 of 7 profiles active</span>
+          <span>6 of 6 global rows active · sessions may override</span>
         </div>
       </div>
 
       <div class="footline">
         <span>Version log: <a class="link" href="#">plugins/dsh-delegation-models/CHANGELOG.md</a></span>
         <span class="flex"></span>
-        <span>Applies to the next delegation · saved 2 min ago</span>
+        <span>Applies to new sessions · saved 2 min ago</span>
       </div>
     </div>
   </main>

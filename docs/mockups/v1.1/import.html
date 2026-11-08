@@ -35,20 +35,21 @@
       <div class="page-head">
         <div>
           <h1>Delegation Models<span class="ver">v1.1.0</span></h1>
-          <p class="sub">Route agent-team and subagent work by agent type, task type and model tier.</p>
+          <p class="sub">Global defaults for agent-team and subagent work; sessions can override them from the right-sidebar panel.</p>
         </div>
         <div class="head-actions">
           <a class="link" href="#">Changelog</a>
           <button class="btn ghost">Auto-configure from file…</button>
-          <button class="btn primary">Save changes</button>
+          <button class="btn primary">Save global defaults</button>
         </div>
       </div>
       <div class="tabs">
         <div class="tab">Profiles</div>
         <div class="tab active">Auto-configure</div>
+        <div class="tab">Rates</div>
         <div class="tab">Session usage</div>
       </div>
-      <div class="note info"><span>ⓘ</span><span>No file selected yet. Add one to preview the generated profiles.</span></div>
+      <div class="note info"><span>ⓘ</span><span>No source yet. Upload a file or paste rules to preview the generated profiles.</span></div>
     </div>
   </main>
 </div>
@@ -61,25 +62,27 @@
     <span class="close">×</span>
   </div>
   <div class="dialog-body">
-    <p class="sub" style="margin:0 0 2px">The agent reads the file, maps each rule to Hundun's categories — agent type, task type, model tier — and proposes profiles. Nothing is written until you apply.</p>
+    <p class="sub" style="margin:0 0 8px">The agent reads the source, maps each rule to the plugin's bundled categories — agent type, task type, model tier — and proposes profiles. Nothing is written until you apply; the source is watched and re-applies when it changes.</p>
+
+    <div class="seg" style="margin-bottom:8px"><span class="on">File</span><span>Paste</span></div>
 
     <div class="source">
       <div class="file-icon">MD</div>
       <div>
-        <div class="file-name">agent-model-guidelines.md</div>
-        <div class="file-meta">Hundun rules/ · 14 KB · parsed 2s ago</div>
+        <div class="file-name">routing-rules.md</div>
+        <div class="file-meta">~/rules/ · 14 KB · parsed 2s ago</div>
       </div>
-      <span class="pill capable">8 rules</span>
+      <span class="chip">◉ Watching · re-applies on change</span>
       <span class="flex"></span>
-      <button class="btn ghost small">Change file…</button>
+      <button class="btn ghost small">Change source…</button>
     </div>
 
-    <div class="drop">Drop a <b>.json</b>, <b>.xml</b>, <b>.txt</b> or <b>.md</b> file here, or <a class="link" href="#">choose a file</a></div>
+    <div class="drop">Drop a <b>.json</b>, <b>.xml</b>, <b>.txt</b> or <b>.md</b> file, paste rules, or <a class="link" href="#">choose a file</a></div>
 
     <div class="parse-summary">
       <span class="dot ok"></span> 6 high confidence
       <span class="dot" style="background:#e8a33d"></span> 2 need review
-      <span class="tag">Hundun categories: 3 tiers · 6 role groups · 7 task classes</span>
+      <span class="chip">Bundled categories · copied 2026-11-07: 3 tiers · 4 agent types · 8 task types</span>
       <span class="spacer flex"></span>
       <span><a class="link" href="#">Select all</a></span>
     </div>
@@ -101,82 +104,66 @@
         <tbody>
           <tr>
             <td><span class="cb on">✓</span></td>
-            <td>Lead</td>
-            <td>Orchestration</td>
+            <td>Lead</td><td>Orchestration</td>
             <td><span class="pill capable"><span class="dot"></span> Capable</span></td>
             <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-flash</td>
-            <td>low</td>
-            <td class="mono" style="color:var(--subtle);font-size:11px">L228</td>
+            <td>low</td><td class="mono" style="color:var(--subtle);font-size:11px">L14</td>
             <td><span class="pill light">high</span></td>
           </tr>
           <tr>
             <td><span class="cb on">✓</span></td>
-            <td>Subagent</td>
-            <td>Implementation</td>
+            <td>Subagent</td><td>Implementation</td>
             <td><span class="pill light"><span class="dot"></span> Light</span></td>
             <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-flash</td>
-            <td>low</td>
-            <td class="mono" style="color:var(--subtle);font-size:11px">L233</td>
+            <td>low</td><td class="mono" style="color:var(--subtle);font-size:11px">L22</td>
             <td><span class="pill light">high</span></td>
           </tr>
           <tr>
             <td><span class="cb on">✓</span></td>
-            <td>Subagent</td>
-            <td>Extraction</td>
+            <td>Subagent</td><td>Extraction</td>
             <td><span class="pill light"><span class="dot"></span> Light</span></td>
             <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-flash</td>
-            <td>low</td>
-            <td class="mono" style="color:var(--subtle);font-size:11px">L234</td>
+            <td>low</td><td class="mono" style="color:var(--subtle);font-size:11px">L27</td>
             <td><span class="pill light">high</span></td>
           </tr>
           <tr>
             <td><span class="cb on">✓</span></td>
-            <td>Reviewer</td>
-            <td>Review</td>
+            <td>Reviewer</td><td>Review</td>
             <td><span class="pill capable"><span class="dot"></span> Capable</span></td>
             <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-v4-pro</td>
-            <td>low</td>
-            <td class="mono" style="color:var(--subtle);font-size:11px">L235</td>
+            <td>low</td><td class="mono" style="color:var(--subtle);font-size:11px">L31</td>
             <td><span class="pill light">high</span></td>
           </tr>
           <tr>
             <td><span class="cb on">✓</span></td>
-            <td>Reviewer</td>
-            <td>Security review</td>
+            <td>Reviewer</td><td>Security review</td>
             <td><span class="pill capable"><span class="dot"></span> Capable</span></td>
             <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-v4-pro</td>
-            <td>medium</td>
-            <td class="mono" style="color:var(--subtle);font-size:11px">L306</td>
+            <td>medium</td><td class="mono" style="color:var(--subtle);font-size:11px">L38</td>
             <td><span class="pill review">review</span></td>
           </tr>
           <tr>
             <td><span class="cb on">✓</span></td>
-            <td>Reviewer</td>
-            <td>Verification</td>
+            <td>Reviewer</td><td>Verification</td>
             <td><span class="pill capable"><span class="dot"></span> Capable</span></td>
             <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-v4-pro</td>
-            <td>low</td>
-            <td class="mono" style="color:var(--subtle);font-size:11px">L235</td>
+            <td>low</td><td class="mono" style="color:var(--subtle);font-size:11px">L42</td>
             <td><span class="pill review">review</span></td>
           </tr>
           <tr>
             <td><span class="cb on">✓</span></td>
-            <td>Teammate</td>
-            <td>Implementation</td>
+            <td>Teammate</td><td>Implementation</td>
             <td><span class="pill capable"><span class="dot"></span> Capable</span></td>
             <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-flash</td>
-            <td>low</td>
-            <td class="mono" style="color:var(--subtle);font-size:11px">L230</td>
+            <td>low</td><td class="mono" style="color:var(--subtle);font-size:11px">L49</td>
             <td><span class="pill light">high</span></td>
           </tr>
           <tr>
             <td><span class="cb on">✓</span></td>
-            <td>Teammate</td>
-            <td>Cleanup</td>
+            <td>Teammate</td><td>Cleanup</td>
             <td><span class="pill light"><span class="dot"></span> Light</span></td>
             <td class="mono" style="font-size:11.5px">deepseek-account/deepseek-flash</td>
-            <td>low</td>
-            <td class="mono" style="color:var(--subtle);font-size:11px">L237</td>
+            <td>low</td><td class="mono" style="color:var(--subtle);font-size:11px">L55</td>
             <td><span class="pill light">high</span></td>
           </tr>
         </tbody>
@@ -189,7 +176,7 @@
     </div>
   </div>
   <div class="dialog-foot">
-    <span class="tag">Previous profiles kept in the version log</span>
+    <span class="tag">Rules copied into the plugin · previous profiles kept in the version log</span>
     <span class="flex"></span>
     <button class="btn ghost">Cancel</button>
     <button class="btn ghost">Preview diff</button>

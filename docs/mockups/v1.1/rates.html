@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Delegation Models — Rates (mockup)</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="mark">DS</span> DeepSeek Harness <span class="chev">▾</span></div>
+    <button class="new">+ New session</button>
+    <nav class="nav">
+      <a><span class="ico">◫</span> Sessions</a>
+      <a class="active"><span class="ico">▤</span> Plugins</a>
+      <a><span class="ico">⌘</span> Skills</a>
+      <a><span class="ico">⚙</span> Settings</a>
+    </nav>
+    <div class="side-sep"></div>
+    <div class="side-label">Workspaces</div>
+    <div class="ws active"><span class="dot"></span> Projects</div>
+    <div class="ws"><span class="dot"></span> dshmazz-plugins</div>
+    <div class="flex"></div>
+    <div class="user"><span class="avatar">f</span> fesmazz <span class="tag">desktop</span></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span>Plugins</span><span class="sep">/</span><span class="crumb-strong">Delegation Models</span>
+      <span class="mock">Proposal mockup · not implemented</span>
+      <div class="flex"></div>
+      <span class="live"><i></i> live</span>
+    </div>
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h1>Rates<span class="ver">v1.1.0</span></h1>
+          <p class="sub">Cost estimates use this rate card. A bundled snapshot ships with the plugin; a custom card can replace or extend it.</p>
+        </div>
+        <div class="head-actions">
+          <a class="link" href="#">Changelog</a>
+          <button class="btn ghost">Use template</button>
+          <button class="btn primary">Save rates</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab">Profiles</div>
+        <div class="tab">Auto-configure</div>
+        <div class="tab active">Rates</div>
+        <div class="tab">Session usage</div>
+      </div>
+
+      <div class="note info"><span>ⓘ</span><span><b>Bundled snapshot 2026-11-07.</b> Values were copied from the owner's current guidelines and generalized for the plugin; nothing links back to an external file.</span></div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="section-head"><h3>Rate card</h3><span class="chip">source: bundled snapshot</span><span class="tag" style="margin-left:auto">USD per 1M tokens</span></div>
+        <table class="rate-table">
+          <thead>
+            <tr><th>Model</th><th>Provider</th><th class="num">Input</th><th class="num">Cache read</th><th class="num">Cache write</th><th class="num">Output</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">deepseek-flash</td><td>deepseek-account</td><td class="num">0.28</td><td class="num">0.028</td><td class="num">0.28</td><td class="num">1.10</td><td class="tiny">peak/off-peak separate</td></tr>
+            <tr><td class="mono">deepseek-v4-pro</td><td>deepseek-account</td><td class="num">0.55</td><td class="num">0.055</td><td class="num">0.55</td><td class="num">2.20</td><td class="tiny">peak/off-peak separate</td></tr>
+            <tr><td class="mono">deepseek-flash</td><td>deepseek-api</td><td class="num">0.27</td><td class="num">0.027</td><td class="num">0.27</td><td class="num">1.10</td><td class="tiny">API key route</td></tr>
+          </tbody>
+        </table>
+        <div class="table-foot"><span>Rates are estimates, not billing. Cache reads and writes are priced separately from fresh input.</span><span class="flex"></span><span>edited 2 min ago</span></div>
+      </div>
+
+      <div class="two-tables">
+        <div class="panel">
+          <h3>Import from bundled snapshot</h3>
+          <p class="hint">Replace the current card with the plugin's bundled copy (copied 2026-11-07, generalized).</p>
+          <button class="btn ghost small">Import bundled snapshot</button>
+          <div class="tiny" style="margin-top:10px">Includes provider/model rows, cache rates and peak/off-peak notes. Your custom rows are kept under "Custom".</div>
+        </div>
+        <div class="panel">
+          <h3>Custom rate card</h3>
+          <p class="hint">Paste a card based on the template, or upload JSON/YAML.</p>
+          <div class="code">{
+  "version": 1,
+  "currency": "USD",
+  "unit": "per_1m_tokens",
+  "models": [
+    { "provider": "deepseek-account",
+      "model": "deepseek-flash",
+      "input": 0.28, "cacheRead": 0.028,
+      "cacheWrite": 0.28, "output": 1.10 }
+  ]
+}</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn ghost small">Paste JSON</button>
+            <button class="btn ghost small">Upload file</button>
+            <button class="btn primary small" style="margin-left:auto">Validate</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="footline">
+        <span>Version log: <a class="link" href="#">plugins/dsh-delegation-models/CHANGELOG.md</a></span>
+        <span class="flex"></span>
+        <span>Applies to session and cost estimates</span>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

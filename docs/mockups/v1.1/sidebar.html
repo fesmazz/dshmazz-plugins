@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Delegation Models — Session sidebar panel (mockup)</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="mark">DS</span> DeepSeek Harness <span class="chev">▾</span></div>
+    <button class="new">+ New session</button>
+    <nav class="nav">
+      <a class="active"><span class="ico">◫</span> Sessions</a>
+      <a><span class="ico">▤</span> Plugins</a>
+      <a><span class="ico">⌘</span> Skills</a>
+      <a><span class="ico">⚙</span> Settings</a>
+    </nav>
+    <div class="side-sep"></div>
+    <div class="side-label">Workspaces</div>
+    <div class="ws active"><span class="dot"></span> Projects</div>
+    <div class="ws"><span class="dot"></span> dshmazz-plugins</div>
+    <div class="flex"></div>
+    <div class="user"><span class="avatar">f</span> fesmazz <span class="tag">desktop</span></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span>Sessions</span><span class="sep">/</span><span class="crumb-strong">dshmazz-plugins · V1.1 implementation</span>
+      <span class="mock">Proposal mockup · not implemented</span>
+      <div class="flex"></div>
+      <span class="live"><i></i> live</span>
+    </div>
+    <div class="content" style="display:flex;flex-direction:column;gap:12px">
+      <div class="card" style="flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+        <div style="align-self:flex-end;max-width:520px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--text)">Implement the V1.1 profiles page and the sidebar override panel. Route implementation subagents to v4-pro, everything else to flash.</div>
+        <div style="max-width:600px;color:var(--muted)">Understood. I'll use the global defaults, then override the implementation row for this session. The Delegation models panel on the right shows what applies.</div>
+        <div style="max-width:600px;color:var(--muted)">Plan: 1) settings page, 2) sidebar panel with inherited rows, 3) auto-configure paste/file with re-apply, 4) rate cards, 5) usage split Team / Subagents.</div>
+        <div class="flex"></div>
+        <div style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--subtle)">Ask anything…</div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="rightbar">
+    <div class="panel-title">
+      <h2>Delegation models</h2>
+      <span class="tag">session</span>
+      <span class="flex"></span>
+      <span class="close" style="color:var(--subtle)">×</span>
+    </div>
+    <p class="tiny" style="margin:0">Inherits the global defaults from Plugins → Delegation Models. Changes here apply to this session only.</p>
+
+    <div class="override-row">
+      <div><div>Lead · Orchestration</div><div class="meta">Global: deepseek-flash · low</div></div>
+      <div class="ctl"><span class="chip">inherited</span><span class="toggle"><i></i></span></div>
+    </div>
+
+    <div class="override-row">
+      <div><div>Teammate · Implementation</div><div class="meta">Global: deepseek-flash · low</div></div>
+      <div class="ctl"><span class="toggle on"><i></i></span></div>
+    </div>
+    <div style="margin:-4px 0 6px 0">
+      <span class="select route" style="min-width:0;width:100%">deepseek-account / deepseek-v4-pro<span class="chev">▾</span></span>
+      <div class="tiny" style="margin-top:4px">Session override · applies to new teammates</div>
+    </div>
+
+    <div class="override-row">
+      <div><div>Subagent · Review</div><div class="meta">Global: deepseek-v4-pro · low</div></div>
+      <div class="ctl"><span class="chip">inherited</span><span class="toggle"><i></i></span></div>
+    </div>
+
+    <div class="override-row">
+      <div><div>Subagent · Extraction</div><div class="meta">Global: deepseek-flash · low</div></div>
+      <div class="ctl"><span class="toggle on"><i></i></span></div>
+    </div>
+    <div style="margin:-4px 0 6px 0">
+      <span class="select" style="min-width:0;width:100%">Light · deepseek-flash<span class="chev">▾</span></span>
+      <div class="tiny" style="margin-top:4px">Session override · effort low</div>
+    </div>
+
+    <div class="flex"></div>
+    <div class="note info" style="margin:0;font-size:11px"><span>ⓘ</span><span>Teammates still inherit the Lead model; the override applies to delegation and subagents until V1.2.</span></div>
+    <div style="display:flex;gap:8px"><button class="btn ghost small">Reset to global</button><button class="btn primary small" style="flex:1">Apply to session</button></div>
+    <div class="tiny" style="text-align:center">Global defaults: Plugins → Delegation Models</div>
+  </aside>
+</div>
+</body>
+</html>

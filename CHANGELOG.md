@@ -10,6 +10,9 @@ releases and repository-level changes.
 - UI proposal for V1.1 and V1.2, with rendered mockups in
   [`docs/mockups/v1.1/`](docs/mockups/v1.1/README.md): profiles settings, file
   auto-configuration, and session model/cost tracking.
+- Refined after owner review: global defaults plus a right-sidebar session override
+  panel, file-or-paste auto-configure with re-apply on change, a Rates tab with a
+  bundled snapshot and custom rate-card template, and separate Team/Subagent usage.
 - Repository rule requiring a changelog for every plugin (`AGENTS.md`).
 
 ## 2026-11-07 — repository 0.2.0
