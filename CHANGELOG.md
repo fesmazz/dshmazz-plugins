@@ -37,6 +37,9 @@ releases and repository-level changes.
   for strict JSON through the `llm` service, extracts and validates it into
   rows, and the Auto-configure tab reviews and applies the proposals; parse
   helpers covered by tests (43 total).
+- V1.1 watched auto-configure: a file source with `autoApply` is polled, re-parsed
+  and re-applied when it changes, with `appliedAt`/`lastError` and the source path
+  in the state and UI; watcher covered by tests (46 total).
 
 ## 2026-11-07 — repository 0.2.0
 

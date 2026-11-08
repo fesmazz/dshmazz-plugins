@@ -45,6 +45,7 @@ window.__ModuleLoader__.load({
       'source.parsing': 'Parsing…',
       'source.apply': 'Apply profiles',
       'source.proposals': 'Parsed proposals',
+      'source.applied': 'Last applied',
       'panel.title': 'Delegation models',
       'panel.inherit': 'Inherits the global defaults. Changes here apply to this session only.',
       'panel.override': 'Override',
@@ -104,6 +105,7 @@ window.__ModuleLoader__.load({
       'source.parsing': '解析中…',
       'source.apply': '应用档案',
       'source.proposals': '解析结果',
+      'source.applied': '上次应用',
       'panel.title': '委派模型',
       'panel.inherit': '继承全局默认；此处更改仅对本会话生效。',
       'panel.override': '覆盖',
@@ -531,6 +533,7 @@ window.__ModuleLoader__.load({
       const { data, t, reload } = props
       const [text, setText] = React.useState(data.state.source?.text ?? '')
       const [autoApply, setAutoApply] = React.useState(data.state.source?.autoApply ?? true)
+      const [filePath, setFilePath] = React.useState(data.state.source?.path ?? '')
       const [message, setMessage] = React.useState(null)
       const [error, setError] = React.useState(null)
       const [parsing, setParsing] = React.useState(false)
@@ -539,13 +542,24 @@ window.__ModuleLoader__.load({
       React.useEffect(() => {
         setText(data.state.source?.text ?? '')
         setAutoApply(data.state.source?.autoApply ?? true)
+        setFilePath(data.state.source?.path ?? '')
       }, [data])
 
       async function save() {
         setMessage(null)
         setError(null)
         try {
-          await request('/source', { method: 'POST', body: JSON.stringify({ source: { kind: 'paste', text, autoApply } }) })
+          await request('/source', {
+            method: 'POST',
+            body: JSON.stringify({
+              source: {
+                kind: filePath === '' ? 'paste' : 'file',
+                ...filePath === '' ? {} : { path: filePath },
+                text,
+                autoApply,
+              },
+            }),
+          })
           setMessage(t('source.saved'))
           await reload()
         } catch (saveError) {
@@ -557,6 +571,7 @@ window.__ModuleLoader__.load({
         const file = event.target.files?.[0]
         if (file === undefined) return
         setText(await file.text())
+        setFilePath(typeof file.path === 'string' ? file.path : '')
       }
 
       async function parse() {
@@ -596,6 +611,9 @@ window.__ModuleLoader__.load({
           h('div', { style: { fontWeight: 600 } }, t('source.title')),
           h('div', { style: S.note }, t('source.sub')),
         ),
+        filePath === '' ? null : h('div', { style: S.small }, filePath),
+        data.state.source?.appliedAt === undefined ? null : h('div', { style: S.small }, `${t('source.applied')}: ${data.state.source.appliedAt}`),
+        data.state.source?.lastError === undefined ? null : h('div', { style: S.error }, data.state.source.lastError),
         h('div', { style: S.rowFlex },
           h('label', { style: S.button }, t('source.file'), h('input', { type: 'file', accept: '.json,.xml,.txt,.md', style: { display: 'none' }, onChange: pickFile })),
           h('label', { style: { ...S.rowFlex, fontSize: '12px' } },

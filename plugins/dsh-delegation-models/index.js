@@ -25,6 +25,7 @@ import { BUNDLED_RATES, validateRateCard } from './src/rates.js'
 import { summarizeAgents } from './src/report.js'
 import { createStateStore, defaultStateDirectory } from './src/state.js'
 import { sumUsage } from './src/usage.js'
+import { createSourceWatcher } from './src/watcher.js'
 
 /** Cordis plugin name. */
 export const name = 'delegation-models'
@@ -513,6 +514,36 @@ export function apply(ctx, rawConfig) {
   const delegate = delegateTool(ctx, getConfig)
   const profile = profileTool(ctx, getConfig)
 
+  const watcher = createSourceWatcher({
+    onChange: async (text) => {
+      try {
+        const result = await parseRules(ctx, state, text, AbortSignal.timeout(90_000))
+        if (!result.ok) {
+          state = store.write({ source: { ...state.source, lastError: result.errors.join('; ') } })
+          return
+        }
+        state = store.write({
+          profiles: result.profiles,
+          source: { ...state.source, text, appliedAt: new Date().toISOString(), lastError: undefined },
+        })
+      } catch (error) {
+        state = store.write({
+          source: { ...state.source, lastError: error instanceof Error ? error.message : String(error) },
+        })
+      }
+    },
+  })
+  const armWatcher = () => {
+    const source = state.source
+    if (source !== null && source !== undefined && source.kind === 'file' && isText(source.path) && source.autoApply === true) {
+      watcher.start(source.path)
+    } else {
+      watcher.stop()
+    }
+  }
+  armWatcher()
+  ctx.effect(() => () => watcher.stop(), 'delegation-models: source watcher')
+
   ctx.effect(() => ctx.tools.register(delegate), 'delegation-models: delegate tool')
   ctx.effect(() => ctx.tools.register(profile), 'delegation-models: profile tool')
   ctx.effect(
@@ -596,6 +627,7 @@ export function apply(ctx, rawConfig) {
           return
         }
         state = store.write({ source })
+        armWatcher()
         writeJson(res, 200, { ok: true, source: state.source })
       },
     },
