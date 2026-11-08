@@ -25,7 +25,7 @@ import fs from 'node:fs'
 
 import { normalizeAccountBalance, normalizeApiKeyBalance } from './src/balance.js'
 import { DEFAULT_RATES, costOfUsage, normalizeRates } from './src/pricing.js'
-import { hourlyBuckets, sessionBreakdown, sumUsageRecords, usageRecords } from './src/usage.js'
+import { hourlyBuckets, sessionBreakdown, sessionHints, sumUsageRecords, usageRecords } from './src/usage.js'
 
 /** Cordis plugin name. */
 export const name = 'token-balance'
@@ -206,7 +206,8 @@ export function apply(ctx, config = {}) {
     // Cache the log length only when it did not move during the read; otherwise
     // the next poll re-reads rather than trusting a snapshot with a missing tail.
     const stableSeq = seqBefore !== undefined && seqBefore === seqAfter ? seqAfter : undefined
-    cache.sessions.set(candidate.id, { seq: stableSeq, complete: !candidate.live, from: windowStart, usage })
+    const hints = sessionHints(events, candidate.header?.cwd)
+    cache.sessions.set(candidate.id, { seq: stableSeq, complete: !candidate.live, from: windowStart, usage, project: hints.project, title: hints.title })
     return usage
   }
 
@@ -270,7 +271,23 @@ export function apply(ctx, config = {}) {
       for (const record of entry.usage) if (record.time >= windowStart) records.push({ ...record, sessionId: id })
     }
     const costOf = (record) => costOfUsage(rates, record.model, record.time, record)
-    const metaById = new Map(list.map((candidate) => [candidate.id, { header: candidate.header }]))
+    const metaById = new Map(list.map((candidate) => {
+      const cached = cache.sessions.get(candidate.id)
+      return [candidate.id, { header: candidate.header, project: cached?.project, title: cached?.title }]
+    }))
+    if (query !== undefined && typeof query.readTitleSnapshots === 'function' && list.length > 0) {
+      try {
+        const titles = await query.readTitleSnapshots(list.map((candidate) => candidate.id))
+        for (const result of Array.isArray(titles) ? titles : []) {
+          if (result?.status === 'fulfilled' && typeof result.value?.title?.title === 'string') {
+            const meta = metaById.get(result.sessionId)
+            if (meta !== undefined) meta.title = result.value.title.title
+          }
+        }
+      } catch {
+        // Titles are cosmetic; the breakdown still works with ids.
+      }
+    }
     const breakdown = sessionBreakdown(records, metaById, costOf)
     const window = hourlyBuckets(records, { now, hours, bucketMs, costOf })
     const session =

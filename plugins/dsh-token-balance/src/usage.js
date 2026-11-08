@@ -235,7 +235,7 @@ export function pickAxisMax(values) {
  * @returns the last path segment, or `Unknown project`.
  */
 export function projectOf(header) {
-  const raw = header?.workspace ?? header?.cwd ?? header?.project
+  const raw = header?.cwd ?? header?.workspace ?? header?.project
   if (typeof raw !== 'string' || raw.length === 0) return 'Unknown project'
   const parts = raw.split(/[\\/]/).filter((part) => part.length > 0)
   return parts.length === 0 ? raw : parts[parts.length - 1]
@@ -255,14 +255,13 @@ export function sessionBreakdown(records, metaById, costOf = () => 0) {
     const id = typeof record.sessionId === 'string' ? record.sessionId : 'unknown'
     const meta = metaById instanceof Map ? metaById.get(id) : undefined
     const header = meta?.header
-    const entry = sessions.get(id) ?? {
-      id,
-      title: typeof header?.title === 'string' && header.title.length > 0 ? header.title : id,
-      project: projectOf(header),
-      cost: 0,
-      totalTokens: 0,
-      requests: 0,
-    }
+    const project = typeof meta?.project === 'string' && meta.project.length > 0 ? meta.project : projectOf(header)
+    const title = typeof meta?.title === 'string' && meta.title.length > 0
+      ? meta.title
+      : header?.origin === 'subagent'
+        ? 'sub-agent - ' + project + ' - ' + (typeof header?.agentPreset === 'string' ? header.agentPreset : 'task')
+        : id
+    const entry = sessions.get(id) ?? { id, title, project, cost: 0, totalTokens: 0, requests: 0 }
     entry.cost += Number.isFinite(costOf(record)) ? costOf(record) : 0
     entry.totalTokens += Number.isFinite(record.totalTokens) ? record.totalTokens : 0
     entry.requests += Number.isFinite(record.requests) ? record.requests : 1
@@ -283,4 +282,45 @@ export function sessionBreakdown(records, metaById, costOf = () => 0) {
     projects: [...projects.values()].sort((a, b) => b.cost - a.cost || a.name.localeCompare(b.name)),
     sessions: sortedSessions,
   }
+}
+
+
+/**
+ * Infer a session's project folder and GUI title from its events.
+ *
+ * Project: the most frequent immediate subfolder of the session's recorded
+ * `cwd` (e.g. `~/Projects/dshmazz-plugins` → `dshmazz-plugins`) seen in tool
+ * arguments; falls back to the cwd basename. Title: the latest `session/title`
+ * or title-bearing event.
+ * @param events - the session's raw events.
+ * @param cwd - the session header's recorded directory.
+ * @returns `{ project, title }` (either may be undefined).
+ */
+export function sessionHints(events, cwd) {
+  const root = typeof cwd === 'string' && cwd.length > 0 ? cwd.replace(/[\\/]+$/, '') : undefined
+  const counts = new Map()
+  let title
+  for (const event of events) {
+    if (event === null || typeof event !== 'object') continue
+    if (typeof event.data?.title === 'string' && event.data.title.length > 0) title = event.data.title
+    let text
+    try { text = JSON.stringify(event) } catch { continue }
+    if (root === undefined) continue
+    const prefix = root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(prefix + '/([A-Za-z0-9._-]+)', 'g')
+    let match
+    while ((match = regex.exec(text)) !== null) {
+      const name = match[1]
+      if (name === '.git' || name === 'node_modules') continue
+      counts.set(name, (counts.get(name) ?? 0) + 1)
+    }
+  }
+  let project
+  let best = 0
+  for (const [name, count] of counts) if (count > best) { best = count; project = name }
+  if (project === undefined && root !== undefined) {
+    const parts = root.split(/[\\/]/).filter(Boolean)
+    project = parts[parts.length - 1]
+  }
+  return { project, title }
 }

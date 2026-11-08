@@ -899,6 +899,7 @@ window.__ModuleLoader__.load({
         const other = rows.slice(5).reduce((sum, row) => ({ name: t('panel.other'), cost: sum.cost + row.cost, totalTokens: sum.totalTokens + row.totalTokens }), { cost: 0, totalTokens: 0 })
         return [...head, other]
       }
+      const [hover, setHover] = React.useState(null)
       const donut = (label, rows) => {
         const data = compact(rows)
         const total = data.reduce((sum, row) => sum + row.cost, 0)
@@ -921,13 +922,20 @@ window.__ModuleLoader__.load({
                 strokeDasharray: dash + ' ' + (circumference - dash),
                 strokeDashoffset: String(-offset),
                 transform: 'rotate(-90 60 60)',
+                style: { cursor: 'pointer' },
+                onMouseEnter: () => setHover({ chart: label, name: row.name, cost: row.cost, percent: total > 0 ? (row.cost / total) * 100 : 0 }),
+                onMouseLeave: () => setHover(null),
               })
               offset += dash
               return segment
             })
         return h(
           'div',
-          { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' } },
+          { style: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' } },
+          hover !== null && hover.chart === label
+            ? h('div', { style: { position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', background: '#0b1622', border: '1px solid #25405a', borderRadius: '6px', padding: '3px 6px', fontSize: '10px', whiteSpace: 'nowrap', zIndex: 2 } },
+                hover.name + ' · ' + formatCost(hover.cost, currency) + ' (' + hover.percent.toFixed(0) + '%)')
+            : null,
           h('svg', { width: size, height: size, viewBox: '0 0 ' + size + ' ' + size, role: 'img', 'aria-label': label }, segments),
           h('div', { style: { fontSize: '11px', color: '#8ea3b8' } }, label),
         )
