@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:18px;display:flex;gap:16px}
+.card{width:380px;background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:14px}
+.h{display:flex;align-items:center;font-size:13px;font-weight:700;margin-bottom:12px}
+.ranges{margin-left:auto;display:flex;background:#141f2b;border-radius:8px;padding:2px;font-size:11px;color:#8ea3b8}
+.ranges span{padding:3px 9px;border-radius:6px}.ranges .on{background:#f7fafc;color:#0b1622;font-weight:700}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.banner{display:flex;align-items:center;background:#101d29;border:1px solid #24445f;border-radius:10px;padding:9px 12px;margin-bottom:10px}
+.lab{font-size:11px;color:#8ea3b8}.lab small{display:block;font-size:9px;color:#657a8f;margin-top:1px}
+.val{margin-left:auto;font-size:22px;font-weight:800;letter-spacing:-.4px;color:#eaf4ff}
+.stats{display:flex;gap:8px;margin:8px 0 2px}
+.stat{flex:1;border-top:1px solid #1e3349;padding-top:8px}
+.stat .v{font-size:18px;font-weight:700}.stat .l{font-size:10px;color:#8ea3b8;margin-top:2px}
+.note{font-size:10px;color:#657a8f;margin-top:10px;line-height:1.4}
+.slim{display:flex;align-items:baseline;gap:8px;background:#101d29;border:1px solid #24445f;border-radius:10px;padding:8px 12px;margin-bottom:10px}
+.slim b{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.slim .ctx{margin-left:auto;font-size:10px;color:#8ea3b8}
+.inline{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.inline .bal{font-size:24px;font-weight:800;letter-spacing:-.4px;color:#7fd1ff}
+.inline .lab{font-size:11px;color:#8ea3b8}
+</style></head><body>
+<div class="card"><div class="tag">A1 — right-aligned value (recommended)</div>
+<div class="h">Usage<span class="ranges"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="banner"><span class="lab">Remaining balance<small>DeepSeek account</small></span><span class="val">$8.99</span></div>
+<div class="stats"><div class="stat"><div class="v">$20.21</div><div class="l">Est. cost</div></div><div class="stat"><div class="v">6,529</div><div class="l">API requests</div></div><div class="stat"><div class="v">1.72B</div><div class="l">Tokens</div></div></div>
+<div class="note">Balance 22px, right-aligned in the banner; label 11px. One added row, nothing else moves.</div></div>
+<div class="card"><div class="tag">A2 — inline number, spend context</div>
+<div class="h">Usage<span class="ranges"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="banner"><span class="inline" style="margin:0"><span class="bal">$8.99</span><span class="lab">remaining balance</span></span><span class="ctx" style="margin-left:auto;font-size:10px;color:#8ea3b8">24h spend $20.21</span></div>
+<div class="stats"><div class="stat"><div class="v">$20.21</div><div class="l">Est. cost</div></div><div class="stat"><div class="v">6,529</div><div class="l">API requests</div></div><div class="stat"><div class="v">1.72B</div><div class="l">Tokens</div></div></div>
+<div class="note">Value leads (24px), label follows; the window spend sits opposite as context.</div></div>
+<div class="card"><div class="tag">A3 — slim single line</div>
+<div class="h">Usage<span class="ranges"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="slim"><span class="lab" style="font-size:11px;color:#8ea3b8">Remaining balance</span><b>$8.99</b><span class="ctx">this session $1.97</span></div>
+<div class="stats"><div class="stat"><div class="v">$20.21</div><div class="l">Est. cost</div></div><div class="stat"><div class="v">6,529</div><div class="l">API requests</div></div><div class="stat"><div class="v">1.72B</div><div class="l">Tokens</div></div></div>
+<div class="note">Most compact: one 34px-tall row, value 20px, account source dropped.</div></div>
+</body></html>

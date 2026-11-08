@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#05080c;font-family:-apple-system,Inter,sans-serif;color:#e7eef7;padding:18px;display:flex;gap:16px}
+.card{width:380px;background:#0d151d;border:1px solid #1e3349;border-radius:12px;padding:14px}
+.h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:12px}
+.ranges{margin-left:auto;display:flex;background:#141f2b;border-radius:8px;padding:2px;font-size:11px;color:#8ea3b8}
+.ranges span{padding:3px 9px;border-radius:6px}.ranges .on{background:#f7fafc;color:#0b1622;font-weight:700}
+.big{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.big small{font-size:11px;font-weight:400;color:#8ea3b8;display:block;margin-top:-2px}
+.banner{display:flex;align-items:center;gap:10px;background:#101d29;border:1px solid #24445f;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.banner .bal{margin-left:auto;font-size:22px;font-weight:800}
+.stats{display:flex;gap:8px;margin:10px 0 4px}
+.stat{flex:1;border-top:1px solid #1e3349;padding-top:8px}
+.stat .v{font-size:19px;font-weight:700}.stat .l{font-size:10px;color:#8ea3b8;margin-top:2px}
+.balance{color:#7fd1ff}.note{font-size:10px;color:#657a8f;margin-top:12px;line-height:1.4}
+.tag{font-size:9px;color:#9db2c6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.dock{display:flex;align-items:center;gap:8px;background:#141f2b;border:1px solid #1e3349;border-radius:999px;padding:6px 12px;font-size:11px;color:#8ea3b8;margin-top:12px}
+.dock b{color:#e7eef7;font-size:13px}
+</style></head><body>
+<!-- A: balance banner above stats -->
+<div class="card"><div class="tag">Variant A — balance banner (recommended)</div>
+<div class="h">Usage<span class="ranges"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="banner"><div class="big small">Remaining balance<small>DeepSeek account</small></div><div class="bal">$8.99</div></div>
+<div class="stats"><div class="stat"><div class="v">$20.21</div><div class="l">Est. cost</div></div><div class="stat"><div class="v">6,529</div><div class="l">API requests</div></div><div class="stat"><div class="v">1.72B</div><div class="l">Tokens</div></div></div>
+<div class="note">Balance is the first number; the range tabs and the rest of the panel are unchanged.</div>
+</div>
+<!-- B: balance first stat -->
+<div class="card"><div class="tag">Variant B — balance as first stat</div>
+<div class="h">Usage<span class="ranges"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span></div>
+<div class="stats" style="margin-top:6px"><div class="stat"><div class="v balance">$8.99</div><div class="l">Balance</div></div><div class="stat"><div class="v">$20.21</div><div class="l">Est. cost</div></div><div class="stat"><div class="v">1.72B</div><div class="l">Tokens</div></div></div>
+<div class="note">Balance takes the first stat slot; API requests moves to a secondary line under cost, and the top-right chip is removed.</div>
+<div class="dock"><b>$8.99</b> balance <span style="margin-left:auto">this session $1.97 →</span></div>
+</div>
+<!-- C: header balance chip first -->
+<div class="card"><div class="tag">Variant C — prominent header chip</div>
+<div class="h"><span>Usage</span><span class="ranges" style="margin-left:0"><span>6h</span><span>12h</span><span class="on">24h</span><span>48h</span></span><span style="margin-left:auto;background:#101d29;border:1px solid #24445f;border-radius:999px;padding:4px 10px;font-size:11px;color:#8ea3b8">Balance <b style="color:#7fd1ff;font-size:15px">$8.99</b></span></div>
+<div class="stats" style="margin-top:16px"><div class="stat"><div class="v">$20.21</div><div class="l">Est. cost</div></div><div class="stat"><div class="v">6,529</div><div class="l">API requests</div></div><div class="stat"><div class="v">1.72B</div><div class="l">Tokens</div></div></div>
+<div class="note">Only the existing chip changes: it moves into the header row before the ranges and grows to 15px. No layout changes below.</div>
+</div>
+</body></html>

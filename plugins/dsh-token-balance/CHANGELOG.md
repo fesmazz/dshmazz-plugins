@@ -1,5 +1,13 @@
 # Changelog — @fesmazz/dsh-token-balance
 
+## [1.3.3] - 2026-11-08
+
+### Changed
+- The remaining balance now leads the Usage panel: a banner under the header shows
+  the cyan balance, its label, and a discrete **Top up** link to the DeepSeek
+  platform. The old top-right balance chip is gone; the duplicated window-spend
+  line was dropped.
+
 ## [1.3.2] - 2026-11-08
 
 ### Added
