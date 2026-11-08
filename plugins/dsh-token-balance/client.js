@@ -1119,21 +1119,6 @@ window.__ModuleLoader__.load({
           ),
         )
         content.push(
-            h(
-              'div',
-              { key: 'axis', style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#8ea3b8' } },
-              h('span', null, t('panel.axis')),
-              h(
-                'select',
-                { style: { background: '#132334', color: '#e7eef7', border: '1px solid #25405a', borderRadius: '6px', padding: '2px 6px', fontSize: '11px' }, value: axisChoice, onChange: (event) => setAxisChoice(event.target.value) },
-                [h('option', { key: 'auto', value: 'auto' }, t('panel.axisAuto'))].concat(
-                  axisOptions.map((range) => h('option', { key: String(range), value: String(range) }, '$' + range.toFixed(2))),
-                ),
-              ),
-            ),
-          )
-        }
-        content.push(
           h(
             'div',
             { key: 'chart-head', style: S.chartHead },
